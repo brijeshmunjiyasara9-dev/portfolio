@@ -1,43 +1,68 @@
 'use client';
-import { Github, Linkedin, Mail, Heart } from 'lucide-react';
+import { Github, Linkedin, Mail } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="py-10 relative"
-      style={{ borderTop: '1px solid rgba(108,99,255,0.1)' }}>
-      <div className="container mx-auto px-6 max-w-5xl">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+    <footer
+      className="py-10 relative"
+      style={{ borderTop: '1px solid var(--border)' }}
+    >
+      <div className="container mx-auto px-6 max-w-6xl">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white"
-              style={{ background: 'linear-gradient(135deg, #6c63ff, #ff6584)' }}>
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black text-white"
+              style={{ background: 'var(--accent)' }}
+            >
               BM
             </div>
             <div>
-              <div className="font-black text-gray-800 text-sm">Brijesh Munjiyasara</div>
-              <div className="text-xs text-gray-400">AI/ML Engineer • Data Scientist</div>
+              <div className="font-black text-sm text-white tracking-wide">
+                BRIJESH<span style={{ color: 'var(--accent)' }}>.</span>IO
+              </div>
+              <div className="text-xs" style={{ color: 'var(--gray3)' }}>
+                AI/ML Engineer · Data Scientist
+              </div>
             </div>
           </div>
 
-          {/* Links */}
+          {/* Social icons */}
           <div className="flex items-center gap-3">
             {[
-              { icon: <Github size={16} />, href: 'https://github.com/brijesh279', label: 'GitHub' },
-              { icon: <Linkedin size={16} />, href: 'https://www.linkedin.com/in/brijesh-munjiyasara/', label: 'LinkedIn' },
-              { icon: <Mail size={16} />, href: 'mailto:brijesh.m@ahduni.edu.in', label: 'Email' },
+              { icon: <Github size={15} />,   href: 'https://github.com/brijesh279',                        label: 'GitHub'   },
+              { icon: <Linkedin size={15} />, href: 'https://www.linkedin.com/in/brijesh-munjiyasara/',     label: 'LinkedIn' },
+              { icon: <Mail size={15} />,     href: 'mailto:brijesh.m@ahduni.edu.in',                      label: 'Email'    },
             ].map(({ icon, href, label }) => (
-              <a key={label} href={href} target="_blank" rel="noopener noreferrer"
-                className="glass w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-purple-600 hover:scale-110 transition-all duration-200">
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200"
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--gray3)',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)';
+                  (e.currentTarget as HTMLElement).style.color = 'var(--accent)';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
+                  (e.currentTarget as HTMLElement).style.color = 'var(--gray3)';
+                }}
+              >
                 {icon}
               </a>
             ))}
           </div>
 
           {/* Copyright */}
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <span>© 2025 Made with</span>
-            <Heart size={12} className="text-red-400 fill-red-400" />
-            <span>by Brijesh</span>
+          <div className="text-xs" style={{ color: 'var(--gray3)' }}>
+            © 2025 Brijesh Munjiyasara · All rights reserved
           </div>
         </div>
       </div>

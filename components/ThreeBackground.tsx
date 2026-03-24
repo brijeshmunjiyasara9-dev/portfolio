@@ -25,10 +25,10 @@ export default function ThreeBackground() {
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
     const palette = [
-      [0.42, 0.39, 1.0],
-      [1.0, 0.4, 0.51],
-      [0.26, 0.91, 0.48],
-      [0.4, 0.75, 1.0],
+      [0.91, 0.27, 0.19],  // coral-red  #E84530
+      [1.0,  0.55, 0.26],  // orange     #ff8c42
+      [0.85, 0.85, 0.90],  // dim white
+      [0.5,  0.5,  0.55],  // mid gray
     ];
     for (let i = 0; i < particleCount; i++) {
       positions[i * 3]     = (Math.random() - 0.5) * 20;
@@ -43,10 +43,10 @@ export default function ThreeBackground() {
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     const mat = new THREE.PointsMaterial({
-      size: 0.06,
+      size: 0.05,
       vertexColors: true,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.35,
       sizeAttenuation: true,
     });
     const particles = new THREE.Points(geo, mat);
@@ -55,19 +55,19 @@ export default function ThreeBackground() {
     // --- Floating 3D shapes ---
     const shapeMeshes: THREE.Mesh[] = [];
     const shapeData = [
-      { geo: new THREE.IcosahedronGeometry(0.35, 1), pos: [-3,   1.5, -1], color: 0x6c63ff, speed: 0.008 },
-      { geo: new THREE.OctahedronGeometry(0.3, 0),   pos: [ 3.5, -1,  -2], color: 0xff6584, speed: 0.012 },
-      { geo: new THREE.TetrahedronGeometry(0.4, 0),  pos: [-4,  -2,   0],  color: 0x43e97b, speed: 0.006 },
-      { geo: new THREE.IcosahedronGeometry(0.2, 0),  pos: [ 4,   2,  -3],  color: 0x6cd3ff, speed: 0.01  },
-      { geo: new THREE.OctahedronGeometry(0.18, 0),  pos: [ 0,   3,  -2],  color: 0xffd166, speed: 0.009 },
-      { geo: new THREE.IcosahedronGeometry(0.28, 1), pos: [-1.5,-2.5,-1],  color: 0xef476f, speed: 0.007 },
+      { geo: new THREE.IcosahedronGeometry(0.35, 1), pos: [-3,   1.5, -1], color: 0xe84530, speed: 0.008 },
+      { geo: new THREE.OctahedronGeometry(0.3, 0),   pos: [ 3.5, -1,  -2], color: 0xff8c42, speed: 0.012 },
+      { geo: new THREE.TetrahedronGeometry(0.4, 0),  pos: [-4,  -2,   0],  color: 0xe84530, speed: 0.006 },
+      { geo: new THREE.IcosahedronGeometry(0.2, 0),  pos: [ 4,   2,  -3],  color: 0xff8c42, speed: 0.01  },
+      { geo: new THREE.OctahedronGeometry(0.18, 0),  pos: [ 0,   3,  -2],  color: 0xe84530, speed: 0.009 },
+      { geo: new THREE.IcosahedronGeometry(0.28, 1), pos: [-1.5,-2.5,-1],  color: 0xff8c42, speed: 0.007 },
     ];
     shapeData.forEach(({ geo, pos, color, speed }) => {
       const wireMat = new THREE.MeshBasicMaterial({
         color,
         wireframe: true,
         transparent: true,
-        opacity: 0.25,
+        opacity: 0.15,
       });
       const mesh = new THREE.Mesh(geo, wireMat);
       mesh.position.set(pos[0], pos[1], pos[2]);

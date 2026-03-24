@@ -10,7 +10,6 @@ import AchievementsSection from '@/components/AchievementsSection';
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 
-// Dynamic import for Three.js to avoid SSR issues
 const ThreeBackground = dynamic(() => import('@/components/ThreeBackground'), {
   ssr: false,
   loading: () => null,
@@ -18,15 +17,9 @@ const ThreeBackground = dynamic(() => import('@/components/ThreeBackground'), {
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen noise">
+    <main className="relative min-h-screen noise" style={{ background: 'var(--bg)' }}>
       {/* 3D Background */}
       <ThreeBackground />
-
-      {/* Sticky background gradient */}
-      <div className="fixed inset-0 pointer-events-none" style={{
-        background: 'linear-gradient(135deg, #faf9f7 0%, #f4f0ff 30%, #fff5f7 60%, #f0fff8 100%)',
-        zIndex: -1,
-      }} />
 
       {/* Navigation */}
       <Navbar />
