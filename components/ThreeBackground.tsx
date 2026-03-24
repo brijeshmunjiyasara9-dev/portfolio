@@ -94,11 +94,16 @@ export default function ThreeBackground() {
     };
     window.addEventListener('mousemove', handleMouse);
 
+    // Initialize sceneRef BEFORE starting the animation loop
+    sceneRef.current = { scene, camera, renderer, particles, floatingShapes: shapeMeshes, animId: 0, mouse };
+
     let t = 0;
     const animate = () => {
       const animId = requestAnimationFrame(animate);
       t += 0.01;
-      sceneRef.current!.animId = animId;
+      if (sceneRef.current) {
+        sceneRef.current.animId = animId;
+      }
 
       particles.rotation.y += 0.0005;
       particles.rotation.x += 0.0002;
@@ -126,8 +131,6 @@ export default function ThreeBackground() {
       renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
-
-    sceneRef.current = { scene, camera, renderer, particles, floatingShapes: shapeMeshes, animId: 0, mouse };
 
     return () => {
       window.removeEventListener('mousemove', handleMouse);
