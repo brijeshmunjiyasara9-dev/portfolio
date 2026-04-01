@@ -8,6 +8,8 @@ const nextConfig = {
       },
     ],
   },
+  // Treat native modules as external so they're not bundled
+  serverExternalPackages: ['better-sqlite3', 'bcryptjs'],
 };
 
 module.exports = nextConfig;

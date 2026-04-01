@@ -1,12 +1,25 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
 import { usePortfolioAnimations } from '@/components/usePortfolioAnimations';
 
 export default function HomePage() {
   usePortfolioAnimations();
+
+  const [about, setAbout] = useState({
+    headline: 'Passionate\nAbout Real-World\nAI Impact',
+    paragraph1: 'As an MTech student in Computer Science at Ahmedabad University, I specialise in machine learning, deep learning, and computer vision — turning complex datasets into actionable insights.',
+    paragraph2: 'From flood-prediction models at BISAG-N (MeitY) to healthcare analytics at WebRepp HK, I bridge the gap between cutting-edge research and real deployable solutions.',
+  });
+
+  useEffect(() => {
+    fetch('/api/portfolio/about').then(r => r.json()).then(data => {
+      if (data && data.headline) setAbout(data);
+    });
+  }, []);
 
   return (
     <>
@@ -103,18 +116,12 @@ export default function HomePage() {
           </div>
           <div className="places-right">
             <h2 className="section-title reveal-up">
-              Passionate<br />About Real-World<br />AI Impact
+              {about.headline.split('\n').map((line, i) => (
+                <span key={i}>{line}{i < about.headline.split('\n').length - 1 && <br />}</span>
+              ))}
             </h2>
-            <p className="section-body reveal-up">
-              As an MTech student in Computer Science at Ahmedabad University, I specialise in
-              machine learning, deep learning, and computer vision — turning complex datasets into
-              actionable insights.
-            </p>
-            <p className="section-body reveal-up">
-              From flood-prediction models at BISAG-N (MeitY) to healthcare analytics at
-              WebRepp HK, I bridge the gap between cutting-edge research and real deployable
-              solutions.
-            </p>
+            <p className="section-body reveal-up">{about.paragraph1}</p>
+            <p className="section-body reveal-up">{about.paragraph2}</p>
             <Link href="/projects" className="text-link reveal-up">
               See My Work <span className="arrow">/</span>
             </Link>
