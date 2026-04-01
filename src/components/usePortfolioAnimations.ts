@@ -27,6 +27,43 @@ export function usePortfolioAnimations() {
       setTimeout(() => clearInterval(checkGSAP), 5000);
     };
 
+    // ── Intersection Observer (runs immediately, no GSAP dependency) ──
+    const revealTargets = document.querySelectorAll(
+      '.reveal-up, .reveal-fade, .img-reveal, .hero-title'
+    );
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+          }
+        });
+      },
+      { threshold: 0.08, rootMargin: '0px 0px -20px 0px' }
+    );
+
+    revealTargets.forEach((el) => observer.observe(el));
+
+    // Trigger page elements immediately visible in viewport
+    setTimeout(() => {
+      document.querySelectorAll(
+        '.reveal-up, .reveal-fade, .img-reveal, .hero-title, .page-hero .reveal-up'
+      ).forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight) {
+          el.classList.add('in-view');
+        }
+      });
+    }, 80);
+
+    // Fallback — make all reveal items visible after 1.5s if still hidden
+    const fallbackTimer = setTimeout(() => {
+      document.querySelectorAll('.reveal-up, .reveal-fade, .img-reveal').forEach(
+        (el) => el.classList.add('in-view')
+      );
+    }, 1500);
+
     const initAnimations = () => {
       const gsap = window.gsap;
       const ScrollTrigger = window.ScrollTrigger;
@@ -48,24 +85,6 @@ export function usePortfolioAnimations() {
         const text = line.innerHTML;
         line.innerHTML = `<span class="reveal-line-inner" style="transition-delay:${i * 0.14}s">${text}</span>`;
       });
-
-      // ── Intersection Observer for scroll reveals ──
-      const revealTargets = document.querySelectorAll(
-        '.reveal-up, .reveal-fade, .img-reveal, .hero-title'
-      );
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('in-view');
-            }
-          });
-        },
-        { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
-      );
-
-      revealTargets.forEach((el) => observer.observe(el));
 
       // Trigger hero elements immediately
       setTimeout(() => {
@@ -217,15 +236,15 @@ export function usePortfolioAnimations() {
 
       return () => {
         window.removeEventListener('scroll', handleScroll);
-        observer.disconnect();
         ScrollTrigger.getAll().forEach((t: any) => t.kill());
       };
     };
 
-    // Page fade in init
-    document.body.style.transition = 'opacity 0.35s ease';
-    document.body.style.opacity = '0';
-
     loadGSAP();
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(fallbackTimer);
+    };
   }, []);
 }
