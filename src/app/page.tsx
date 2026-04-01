@@ -108,7 +108,7 @@ export default function HomePage() {
             <div className="places-images">
               <div className="place-img-wrap reveal-up">
                 <img
-                  src="./src/styles/Brijesh.png"
+                  src="/src/styles/Brijesh.png"
                   alt="Deep Learning Research"
                 />
               </div>
