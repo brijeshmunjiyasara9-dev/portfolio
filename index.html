@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Obsidian Assembly</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- Grain Overlay -->
+  <div class="grain-overlay"></div>
+
+  <!-- Navigation -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">The Obsidian Assembly</a>
+      <div class="nav-right">
+        <a href="objects.html" class="nav-link">Objects</a>
+        <a href="places.html" class="nav-link">Places</a>
+        <a href="people.html" class="nav-link">People</a>
+        <a href="updates.html" class="nav-link">Updates</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="hero-content">
+      <div class="hero-label reveal-up">Coordinates&nbsp;&nbsp;Withheld</div>
+      <h1 class="hero-title">
+        <span class="reveal-line">A Private Assembly</span>
+        <span class="reveal-line">for Makers</span>
+      </h1>
+      <div class="hero-cta reveal-up">
+        <a href="places.html" class="cta-link">Commitment<span class="cta-sep">Precedes</span>Entry <span class="cta-arrow">/</span></a>
+      </div>
+    </div>
+    <div class="hero-image-grid">
+      <div class="hero-img-wrap img-reveal">
+        <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&q=80&auto=format" alt="Assembly space" class="hero-img" />
+      </div>
+      <div class="hero-img-wrap img-reveal delay-1">
+        <img src="https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=600&q=80&auto=format" alt="Makers" class="hero-img" />
+      </div>
+      <div class="hero-img-wrap img-reveal delay-2">
+        <img src="https://images.unsplash.com/photo-1604782206219-3b9576645323?w=600&q=80&auto=format" alt="Interior" class="hero-img" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Marquee / Scrolling Text -->
+  <div class="marquee-section">
+    <div class="marquee-track">
+      <span>Not Everything is Visible</span>
+      <span class="marquee-dot">·</span>
+      <span>Not Everything is Visible</span>
+      <span class="marquee-dot">·</span>
+      <span>Not Everything is Visible</span>
+      <span class="marquee-dot">·</span>
+      <span>Not Everything is Visible</span>
+      <span class="marquee-dot">·</span>
+      <span>Not Everything is Visible</span>
+      <span class="marquee-dot">·</span>
+      <span>Not Everything is Visible</span>
+      <span class="marquee-dot">·</span>
+    </div>
+  </div>
+
+  <!-- Full Bleed Image Section -->
+  <section class="full-bleed-section">
+    <div class="full-bleed-image parallax-img">
+      <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1400&q=80&auto=format" alt="Obsidian Assembly" />
+      <div class="full-bleed-overlay"></div>
+    </div>
+    <div class="full-bleed-text reveal-up">
+      <h2>Not Everything<br/>is Visible</h2>
+    </div>
+  </section>
+
+  <!-- Places Section -->
+  <section class="places-section" id="places">
+    <div class="places-inner">
+      <div class="places-left">
+        <div class="places-images">
+          <div class="place-img-wrap reveal-up">
+            <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=700&q=80&auto=format" alt="Place interior" />
+          </div>
+        </div>
+      </div>
+      <div class="places-right">
+        <h2 class="section-title reveal-up">You Won't<br/>Find Them<br/>on a Map</h2>
+        <p class="section-body reveal-up">These places aren't broadly announced.</p>
+        <p class="section-body reveal-up">There are 7 in operation at the moment, each established within a specific context and maintained with discretion. Their presence is intentional, shaped by location rather than visibility. Access is considered, not assumed.</p>
+        <a href="places.html" class="text-link reveal-up">See if Nearby <span class="arrow">/</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Horizontal Scroll / Objects Preview -->
+  <section class="objects-preview-section">
+    <div class="objects-preview-header">
+      <div class="objects-header-left reveal-up">
+        <p class="section-small-text">These items are formed within the places themselves.</p>
+        <p class="section-small-text">Each originates on site, shaped by material, process, and circumstance.</p>
+        <p class="section-small-text">Once completed, they leave their point of origin and circulate independently.</p>
+        <a href="objects.html" class="btn-outline reveal-up">Explore Objects</a>
+      </div>
+    </div>
+
+    <!-- Horizontal scroll strip -->
+    <div class="objects-hscroll-wrap">
+      <div class="objects-hscroll" id="objScroll">
+        <div class="obj-card reveal-fade">
+          <div class="obj-img-wrap">
+            <img src="https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=500&q=80&auto=format" alt="Object V" />
+          </div>
+          <div class="obj-meta">
+            <span class="obj-num">(V)</span>
+            <span class="obj-name">The Fox Spirit</span>
+          </div>
+          <div class="obj-counter">1/4</div>
+        </div>
+        <div class="obj-card reveal-fade delay-1">
+          <div class="obj-img-wrap">
+            <img src="https://images.unsplash.com/photo-1576086213369-97a306d36557?w=500&q=80&auto=format" alt="Object I" />
+          </div>
+          <div class="obj-meta">
+            <span class="obj-num">(I)</span>
+            <span class="obj-name">Object I</span>
+          </div>
+          <div class="obj-counter">2/4</div>
+        </div>
+        <div class="obj-card reveal-fade delay-2">
+          <div class="obj-img-wrap">
+            <img src="https://images.unsplash.com/photo-1615529162924-f8605388461d?w=500&q=80&auto=format" alt="The Guardian" />
+          </div>
+          <div class="obj-meta">
+            <span class="obj-num">(VI)</span>
+            <span class="obj-name">The Guardian</span>
+          </div>
+          <div class="obj-counter">3/4</div>
+        </div>
+        <div class="obj-card reveal-fade delay-3">
+          <div class="obj-img-wrap">
+            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80&auto=format" alt="The Elder" />
+          </div>
+          <div class="obj-meta">
+            <span class="obj-num">(VIII)</span>
+            <span class="obj-name">The Elder</span>
+          </div>
+          <div class="obj-counter">4/4</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Connection / Origin Section -->
+  <section class="connection-section">
+    <div class="connection-inner">
+      <div class="connection-image reveal-up">
+        <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&q=80&auto=format" alt="Connection" />
+      </div>
+      <div class="connection-text">
+        <span class="section-label reveal-up">Connection</span>
+        <h2 class="section-title reveal-up">The Item Shown<br/>at Point<br/>of Origin.</h2>
+        <p class="section-body reveal-up">Places and Items are not separate. Each item originates within a specific place, shaped by its conditions, materials, and use.</p>
+        <p class="section-body reveal-up">Once removed, the item continues independently, carrying its point of origin without representing it directly.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Updates Section -->
+  <section class="updates-section" id="updates">
+    <div class="updates-inner">
+      <h2 class="section-title reveal-up">Updates<br/>Now Forming</h2>
+      <div class="updates-list">
+        <div class="update-item reveal-up">
+          <div class="update-tag">Place status</div>
+          <div class="update-title">Lower Hall Operational</div>
+          <div class="update-body">Lower Hall has entered active operation and is now maintained on a regular cycle.</div>
+        </div>
+        <div class="update-item reveal-up delay-1">
+          <div class="update-tag">Item release</div>
+          <div class="update-title">Item II In Circulation</div>
+          <div class="update-body">Item 02 has been released externally and is now circulating beyond its point of origin.</div>
+        </div>
+        <div class="update-item reveal-up delay-2">
+          <div class="update-tag">Formation / Process</div>
+          <div class="update-title">Interior V Forming</div>
+          <div class="update-body">Work continues on Interior 05. Conditions are being refined prior to use.</div>
+        </div>
+      </div>
+      <!-- Numbered indicator -->
+      <div class="updates-numbers reveal-up">
+        <span class="num active">1</span><span class="num">2</span><span class="num">3</span><span class="num">4</span><span class="num">5</span>
+      </div>
+    </div>
+    <div class="updates-image reveal-fade">
+      <img src="https://images.unsplash.com/photo-1545486332-9e0999c535b2?w=800&q=80&auto=format" alt="Updates" />
+    </div>
+  </section>
+
+  <!-- People Section -->
+  <section class="people-section" id="people">
+    <div class="people-inner">
+      <div class="people-images">
+        <div class="person-img reveal-up">
+          <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80&auto=format" alt="Person" />
+        </div>
+        <div class="person-img reveal-up delay-1">
+          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80&auto=format" alt="Person" />
+        </div>
+        <div class="person-img reveal-up delay-2">
+          <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80&auto=format" alt="Person" />
+        </div>
+        <div class="person-img reveal-up delay-3">
+          <img src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&q=80&auto=format" alt="Person" />
+        </div>
+      </div>
+      <div class="people-text">
+        <h2 class="section-title reveal-up">Formed by<br/>People…<br/>People</h2>
+        <p class="section-body reveal-up">These places and items are shaped by a small group of people working across locations and disciplines.</p>
+        <p class="section-body reveal-up">Their involvement is ongoing and collaborative.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Apply / Admission Form Section -->
+  <section class="apply-section" id="apply">
+    <div class="apply-inner">
+      <h2 class="section-title reveal-up">Apply for<br/>Admission</h2>
+      <form class="apply-form" id="applyForm">
+        <div class="form-row reveal-up">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-input" placeholder="Nick Harrison" />
+        </div>
+        <div class="form-row reveal-up delay-1">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-input" placeholder="nick-h@gmail.com" />
+        </div>
+        <div class="form-row reveal-up delay-2">
+          <label class="form-label">Country</label>
+          <input type="text" class="form-input" placeholder="Switzerland" />
+        </div>
+        <div class="form-row reveal-up delay-3">
+          <label class="form-label">City</label>
+          <input type="text" class="form-input" placeholder="Basel" />
+        </div>
+        <div class="form-row reveal-up delay-4">
+          <label class="form-label">Context for Admission <span class="form-label-sub">/</span></label>
+          <textarea class="form-input form-textarea" placeholder="I am an Artist, leaving in…"></textarea>
+        </div>
+        <div class="form-footer reveal-up delay-5">
+          <p class="form-note">I understand that admission is reviewed selectively and responses may take time.<br/>
+          <a href="#" class="form-link">Read ImaginePossible Policy</a></p>
+          <button type="submit" class="btn-submit">Submit</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="footer-logo">The Obsidian Assembly</span>
+        <span class="footer-tagline">A Private Assembly for Makers</span>
+      </div>
+      <div class="footer-links">
+        <a href="objects.html" class="footer-link">Objects</a>
+        <a href="places.html" class="footer-link">Places</a>
+        <a href="people.html" class="footer-link">People</a>
+        <a href="updates.html" class="footer-link">Updates</a>
+      </div>
+      <div class="footer-bottom">
+        <span class="footer-copy">© The Obsidian Assembly</span>
+        <a href="#" class="footer-link">ImaginePossible Policy</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/ScrollTrigger.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

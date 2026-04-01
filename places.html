@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Places — The Obsidian Assembly</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    .places-grid {
+      padding: 4rem 3rem 8rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 3rem;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+    .place-card { position: relative; }
+    .place-card-img {
+      overflow: hidden;
+      border-radius: 2px;
+      aspect-ratio: 16/10;
+      margin-bottom: 1.2rem;
+    }
+    .place-card-img img {
+      transition: transform 0.7s var(--ease);
+      filter: grayscale(20%) contrast(1.05);
+    }
+    .place-card:hover .place-card-img img { transform: scale(1.05); }
+    .place-card-status {
+      display: inline-block;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent-dim);
+      border: 1px solid rgba(201,184,138,0.3);
+      padding: 0.3em 0.7em;
+      margin-bottom: 0.8rem;
+      border-radius: 1px;
+    }
+    .place-card-name {
+      font-family: var(--font-serif);
+      font-size: 1.3rem;
+      font-weight: 400;
+      color: var(--white);
+      margin-bottom: 0.5rem;
+    }
+    .place-card-location {
+      font-size: 0.8rem;
+      color: var(--white-dim);
+      letter-spacing: 0.08em;
+    }
+    .places-disclaimer {
+      padding: 3rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--white-dim);
+      line-height: 1.75;
+      max-width: 560px;
+      font-style: italic;
+      font-family: var(--font-serif);
+    }
+    @media (max-width: 768px) {
+      .places-grid { padding: 3rem 1.5rem 6rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain-overlay"></div>
+
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">The Obsidian Assembly</a>
+      <div class="nav-right">
+        <a href="objects.html" class="nav-link">Objects</a>
+        <a href="places.html" class="nav-link" style="color:var(--white)">Places</a>
+        <a href="people.html" class="nav-link">People</a>
+        <a href="updates.html" class="nav-link">Updates</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <div class="page-hero-label reveal-up">Coordinates Withheld</div>
+    <h1 class="page-hero-title reveal-up">You Won't Find<br/>Them on a Map</h1>
+    <p class="page-hero-body reveal-up">There are 7 in operation at the moment, each established within a specific context and maintained with discretion. Their presence is intentional, shaped by location rather than visibility.</p>
+  </section>
+
+  <div class="places-grid">
+    <div class="place-card reveal-up">
+      <div class="place-card-img">
+        <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=700&q=80&auto=format" alt="Lower Hall" />
+      </div>
+      <div class="place-card-status">Operational</div>
+      <div class="place-card-name">Lower Hall</div>
+      <div class="place-card-location">Location Withheld</div>
+    </div>
+
+    <div class="place-card reveal-up delay-1">
+      <div class="place-card-img">
+        <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=700&q=80&auto=format" alt="West Chamber" />
+      </div>
+      <div class="place-card-status">Operational</div>
+      <div class="place-card-name">West Chamber</div>
+      <div class="place-card-location">Location Withheld</div>
+    </div>
+
+    <div class="place-card reveal-up delay-2">
+      <div class="place-card-img">
+        <img src="https://images.unsplash.com/photo-1604782206219-3b9576645323?w=700&q=80&auto=format" alt="Interior V" />
+      </div>
+      <div class="place-card-status">Forming</div>
+      <div class="place-card-name">Interior V</div>
+      <div class="place-card-location">Location Withheld</div>
+    </div>
+
+    <div class="place-card reveal-up">
+      <div class="place-card-img">
+        <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=700&q=80&auto=format" alt="East Site" />
+      </div>
+      <div class="place-card-status">Operational</div>
+      <div class="place-card-name">East Site</div>
+      <div class="place-card-location">Location Withheld</div>
+    </div>
+
+    <div class="place-card reveal-up delay-1">
+      <div class="place-card-img">
+        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=80&auto=format" alt="Upper Hall" />
+      </div>
+      <div class="place-card-status">Operational</div>
+      <div class="place-card-name">Upper Hall</div>
+      <div class="place-card-location">Location Withheld</div>
+    </div>
+
+    <div class="place-card reveal-up delay-2">
+      <div class="place-card-img">
+        <img src="https://images.unsplash.com/photo-1545486332-9e0999c535b2?w=700&q=80&auto=format" alt="South Site" />
+      </div>
+      <div class="place-card-status">Operational</div>
+      <div class="place-card-name">South Site</div>
+      <div class="place-card-location">Location Withheld</div>
+    </div>
+
+    <div class="place-card reveal-up">
+      <div class="place-card-img">
+        <img src="https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=700&q=80&auto=format" alt="North Keep" />
+      </div>
+      <div class="place-card-status">Under Review</div>
+      <div class="place-card-name">North Keep</div>
+      <div class="place-card-location">Location Withheld</div>
+    </div>
+  </div>
+
+  <div class="places-disclaimer reveal-up">
+    <p>Access is considered, not assumed. These places are not publicly accessible.</p>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="footer-logo">The Obsidian Assembly</span>
+        <span class="footer-tagline">A Private Assembly for Makers</span>
+      </div>
+      <div class="footer-links">
+        <a href="objects.html" class="footer-link">Objects</a>
+        <a href="places.html" class="footer-link">Places</a>
+        <a href="people.html" class="footer-link">People</a>
+        <a href="updates.html" class="footer-link">Updates</a>
+      </div>
+      <div class="footer-bottom">
+        <span class="footer-copy">© The Obsidian Assembly</span>
+        <a href="#" class="footer-link">ImaginePossible Policy</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/ScrollTrigger.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
