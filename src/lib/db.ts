@@ -17,6 +17,19 @@ import bcrypt from 'bcryptjs';
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 export interface DbRow { [key: string]: unknown }
 
+export interface Certification {
+  id: number;
+  title: string;
+  issuer: string;
+  tag: string;
+  date_issued: string;
+  credential_url: string;
+  description: string;
+  image: string;
+  visible: number;
+  sort_order: number;
+}
+
 /* ─── Adapter interface ──────────────────────────────────────────────────── */
 interface DbAdapter {
   get(sql: string, params?: unknown[]): Promise<DbRow | undefined>;
@@ -157,6 +170,9 @@ async function initSchema(db: DbAdapter) {
       tech TEXT NOT NULL,
       detail TEXT NOT NULL,
       image TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      github_url TEXT NOT NULL DEFAULT '',
+      website_url TEXT NOT NULL DEFAULT '',
       visible INTEGER DEFAULT 1,
       sort_order INTEGER DEFAULT 0
     )
@@ -198,6 +214,24 @@ async function initSchema(db: DbAdapter) {
       sort_order INTEGER DEFAULT 0
     )
   `);
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS certifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      issuer TEXT NOT NULL,
+      tag TEXT NOT NULL DEFAULT 'Certification',
+      date_issued TEXT NOT NULL,
+      credential_url TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL DEFAULT '',
+      image TEXT NOT NULL DEFAULT '',
+      visible INTEGER DEFAULT 1,
+      sort_order INTEGER DEFAULT 0
+    )
+  `);
+  // Migrate: add new columns to projects if they don't exist
+  try { await db.exec(`ALTER TABLE projects ADD COLUMN description TEXT NOT NULL DEFAULT ''`); } catch {}
+  try { await db.exec(`ALTER TABLE projects ADD COLUMN github_url TEXT NOT NULL DEFAULT ''`); } catch {}
+  try { await db.exec(`ALTER TABLE projects ADD COLUMN website_url TEXT NOT NULL DEFAULT ''`); } catch {}
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -228,17 +262,17 @@ async function seedData(db: DbAdapter) {
   const projRow = await db.get('SELECT COUNT(*) as c FROM projects');
   if ((projRow?.c as number) === 0) {
     const projects = [
-      ['(I)', 'Document Management System', 'MEAN Stack · RAG · NLP', 'NLP & LLM Integration', 'https://images.unsplash.com/photo-1559028012-481c04fa702d?w=600&q=80&auto=format', 1],
-      ['(II)', 'Human Stress Observatory', 'Bayesian Modeling · ELSI Index', 'Human System Stress Observatory (HSSO)', 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80&auto=format', 2],
-      ['(III)', 'Personalised Brain Network Analysis', 'GNN · fMRI · Deep Learning', 'Neuroscience · Graph Neural Networks', 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=600&q=80&auto=format', 3],
-      ['(IV)', 'UAV ReID-Based Tracking', 'YOLO · DeepSORT · Computer Vision', 'Evaluating ReID Algorithms for UAV Videos', 'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=600&q=80&auto=format', 4],
-      ['(V)', 'Satellite Image Processing', 'Remote Sensing · Atmospheric Correction', 'BISAG-N · MeitY · Gandhinagar', 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=600&q=80&auto=format', 5],
-      ['(VI)', 'Flood Prediction Model', 'Machine Learning · IJSRST Published', 'Natural Disaster Prediction', 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=600&q=80&auto=format', 6],
-      ['(VII)', 'RAG-Based Disaster Chatbot', 'RAG · LLM · NLP Pipeline', 'Conversational AI · BISAG-N', 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&q=80&auto=format', 7],
-      ['(VIII)', 'Healthcare Analytics Dashboard', 'ETL · Power BI · PostgreSQL', 'WebRepp HK · Pandemic Preparedness', 'https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=600&q=80&auto=format', 8],
+      ['(I)', 'Document Management System', 'MEAN Stack · RAG · NLP', 'NLP & LLM Integration', 'https://images.unsplash.com/photo-1559028012-481c04fa702d?w=600&q=80&auto=format', 'An intelligent document management system powered by Retrieval-Augmented Generation (RAG) and NLP. Built with the MEAN stack, it enables semantic search, auto-categorisation, and conversational querying of documents.', '', '', 1, 1],
+      ['(II)', 'Human Stress Observatory', 'Bayesian Modeling · ELSI Index', 'Human System Stress Observatory (HSSO)', 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80&auto=format', 'A research system for measuring and monitoring human stress levels using Bayesian modeling and the ELSI (Emotional Stress Level Index). Combines physiological and behavioural signals for holistic stress profiling.', '', '', 1, 2],
+      ['(III)', 'Personalised Brain Network Analysis', 'GNN · fMRI · Deep Learning', 'Neuroscience · Graph Neural Networks', 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=600&q=80&auto=format', 'Graph Neural Network–based analysis of personalised brain connectivity patterns derived from fMRI data. This project explores how individual brain network topology correlates with cognitive traits and neurological conditions.', '', '', 1, 3],
+      ['(IV)', 'UAV ReID-Based Tracking', 'YOLO · DeepSORT · Computer Vision', 'Evaluating ReID Algorithms for UAV Videos', 'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=600&q=80&auto=format', 'Evaluation and benchmarking of person Re-Identification (ReID) algorithms for UAV-captured aerial video. Uses YOLO for detection and DeepSORT for tracking, with custom aerial-angle optimisations.', '', '', 1, 4],
+      ['(V)', 'Satellite Image Processing', 'Remote Sensing · Atmospheric Correction', 'BISAG-N · MeitY · Gandhinagar', 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=600&q=80&auto=format', 'Geospatial image processing pipeline developed at BISAG-N for satellite imagery analysis. Includes atmospheric correction, band compositing, and land-use classification from multi-spectral satellite data.', '', '', 1, 5],
+      ['(VI)', 'Flood Prediction Model', 'Machine Learning · IJSRST Published', 'Natural Disaster Prediction', 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=600&q=80&auto=format', 'Machine learning model for flood event prediction using historical satellite and meteorological data. Published in the International Journal of Scientific Research in Science and Technology (IJSRST), May–Sep 2025.', '', '', 1, 6],
+      ['(VII)', 'RAG-Based Disaster Chatbot', 'RAG · LLM · NLP Pipeline', 'Conversational AI · BISAG-N', 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&q=80&auto=format', 'Conversational AI chatbot for disaster management queries, built with a Retrieval-Augmented Generation (RAG) pipeline. Developed for BISAG-N to provide real-time, document-grounded responses to disaster preparedness questions.', '', '', 1, 7],
+      ['(VIII)', 'Healthcare Analytics Dashboard', 'ETL · Power BI · PostgreSQL', 'WebRepp HK · Pandemic Preparedness', 'https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=600&q=80&auto=format', 'End-to-end healthcare analytics platform for WebRepp HK. Features interactive Power BI dashboards, ETL pipelines, and a pandemic preparedness scoring system built on PostgreSQL for real-world health KPI monitoring.', '', '', 1, 8],
     ];
     for (const p of projects) {
-      await db.run('INSERT INTO projects (num, name, tech, detail, image, sort_order) VALUES (?, ?, ?, ?, ?, ?)', p);
+      await db.run('INSERT INTO projects (num, name, tech, detail, image, description, github_url, website_url, visible, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', p);
     }
   }
 
@@ -285,6 +319,19 @@ async function seedData(db: DbAdapter) {
     ];
     for (const e of edus) {
       await db.run('INSERT INTO education (title, institution, tag, period, description, sort_order) VALUES (?, ?, ?, ?, ?, ?)', e);
+    }
+  }
+
+  // Certifications
+  const certRow = await db.get('SELECT COUNT(*) as c FROM certifications');
+  if ((certRow?.c as number) === 0) {
+    const certs = [
+      ['AWS Academy Graduate — Cloud Foundations', 'Amazon Web Services', 'Cloud · AWS', '2024', '', 'Completed Amazon Web Services Academy Cloud Foundations programme, gaining expertise in core AWS services, cloud architecture patterns, security best practices, pricing models, and deployment strategies for scalable cloud-based applications.', 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&q=80&auto=format', 1, 1],
+      ['NPTEL Certified — Python for Data Science', 'NPTEL / IIT', 'Data Science · Python', '2023', '', 'Nationally recognised NPTEL certification in Python for Data Science. Covered NumPy, Pandas, Matplotlib, Scikit-learn, and statistical analysis methodologies for data-driven decision making.', 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=600&q=80&auto=format', 1, 2],
+      ['Research Paper Published — IJSRST', 'International Journal of Scientific Research in Science & Technology', 'Research · Published', 'May–Sep 2025', '', 'Research paper on flood prediction using machine learning published in IJSRST — a peer-reviewed international journal. Explores advanced ML techniques applied to satellite and meteorological data for accurate flood prediction and early warning systems.', 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=600&q=80&auto=format', 1, 3],
+    ];
+    for (const c of certs) {
+      await db.run('INSERT INTO certifications (title, issuer, tag, date_issued, credential_url, description, image, visible, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', c);
     }
   }
 }

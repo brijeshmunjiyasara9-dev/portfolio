@@ -4,21 +4,23 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-type Section = 'about' | 'projects' | 'experience' | 'skills' | 'education';
+type Section = 'about' | 'projects' | 'experience' | 'skills' | 'education' | 'certifications';
 
-interface Project { id: number; num: string; name: string; tech: string; detail: string; image: string; visible: number; sort_order: number; }
+interface Project { id: number; num: string; name: string; tech: string; detail: string; image: string; description: string; github_url: string; website_url: string; visible: number; sort_order: number; }
 interface Experience { id: number; company: string; role: string; tag: string; period: string; description: string; image: string; status: string; visible: number; sort_order: number; }
 interface Skill { id: number; category: string; role: string; skills_list: string; image: string; visible: number; sort_order: number; }
 interface Education { id: number; title: string; institution: string; tag: string; period: string; description: string; visible: number; sort_order: number; }
 interface About { id: number; headline: string; paragraph1: string; paragraph2: string; }
+interface Certification { id: number; title: string; issuer: string; tag: string; date_issued: string; credential_url: string; description: string; image: string; visible: number; sort_order: number; }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const SECTION_META: Record<Section, { label: string; icon: string; color: string }> = {
-  about:      { label: 'About',      icon: '👤', color: '#6366f1' },
-  projects:   { label: 'Projects',   icon: '🚀', color: '#0ea5e9' },
-  experience: { label: 'Experience', icon: '💼', color: '#10b981' },
-  skills:     { label: 'Skills',     icon: '⚡', color: '#f59e0b' },
-  education:  { label: 'Education',  icon: '🎓', color: '#ec4899' },
+  about:          { label: 'About',          icon: '👤', color: '#6366f1' },
+  projects:       { label: 'Projects',       icon: '🚀', color: '#0ea5e9' },
+  experience:     { label: 'Experience',     icon: '💼', color: '#10b981' },
+  skills:         { label: 'Skills',         icon: '⚡', color: '#f59e0b' },
+  education:      { label: 'Education',      icon: '🎓', color: '#ec4899' },
+  certifications: { label: 'Certifications', icon: '🏆', color: '#f97316' },
 };
 
 // ─── Shared Modal ─────────────────────────────────────────────────────────────
@@ -170,7 +172,7 @@ function ProjectsSection() {
   const [items, setItems] = useState<Project[]>([]);
   const [modal, setModal] = useState<Project | null | 'new'>(null);
   const [saving, setSaving] = useState(false);
-  const blank: Omit<Project, 'id'> = { num: '', name: '', tech: '', detail: '', image: '', visible: 1, sort_order: 0 };
+  const blank: Omit<Project, 'id'> = { num: '', name: '', tech: '', detail: '', image: '', description: '', github_url: '', website_url: '', visible: 1, sort_order: 0 };
   const [form, setForm] = useState<any>(blank);
 
   const load = useCallback(() => {
@@ -218,6 +220,9 @@ function ProjectsSection() {
           <Field label="Project Name" value={form.name} onChange={v => setForm({ ...form, name: v })} />
           <Field label="Tech Stack" value={form.tech} onChange={v => setForm({ ...form, tech: v })} placeholder="e.g. Python · TensorFlow · Docker" />
           <Field label="Detail / Subtitle" value={form.detail} onChange={v => setForm({ ...form, detail: v })} />
+          <Field label="Description" value={form.description ?? ''} onChange={v => setForm({ ...form, description: v })} multiline placeholder="Short description of the project..." />
+          <Field label="GitHub URL" value={form.github_url ?? ''} onChange={v => setForm({ ...form, github_url: v })} placeholder="https://github.com/..." />
+          <Field label="Website / Live Demo URL" value={form.website_url ?? ''} onChange={v => setForm({ ...form, website_url: v })} placeholder="https://..." />
           <Field label="Image URL" value={form.image} onChange={v => setForm({ ...form, image: v })} />
           <Field label="Sort Order" value={String(form.sort_order)} onChange={v => setForm({ ...form, sort_order: parseInt(v) || 0 })} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -347,6 +352,64 @@ function SkillsSection() {
   );
 }
 
+// ─── CERTIFICATIONS Section ──────────────────────────────────────────────────
+function CertificationsSection() {
+  const [items, setItems] = useState<Certification[]>([]);
+  const [modal, setModal] = useState<Certification | null | 'new'>(null);
+  const [saving, setSaving] = useState(false);
+  const blank = { title: '', issuer: '', tag: 'Certification', date_issued: '', credential_url: '', description: '', image: '', visible: 1, sort_order: 0 };
+  const [form, setForm] = useState<any>(blank);
+
+  const load = useCallback(() => { fetch('/api/portfolio/certifications').then(r => r.json()).then(setItems); }, []);
+  useEffect(() => { load(); }, [load]);
+
+  async function save() {
+    setSaving(true);
+    await fetch('/api/portfolio/certifications', { method: modal === 'new' ? 'POST' : 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    setSaving(false); setModal(null); load();
+  }
+  async function toggleVisible(item: Certification) {
+    await fetch('/api/portfolio/certifications', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...item, visible: item.visible ? 0 : 1 }) });
+    load();
+  }
+  async function del(id: number) {
+    await fetch('/api/portfolio/certifications', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+    load();
+  }
+
+  return (
+    <div>
+      <SectionHeader title="Certifications" subtitle="Manage certifications, awards, and research publications" onAdd={() => { setForm({ ...blank, sort_order: items.length + 1 }); setModal('new'); }} count={items.length} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+        {items.map(c => (
+          <ItemCard key={c.id} title={c.title} subtitle={c.issuer} extra={`${c.tag} · ${c.date_issued}`}
+            visible={c.visible} onToggle={() => toggleVisible(c)} onEdit={() => { setForm({ ...c }); setModal(c); }} onDelete={() => del(c.id)} />
+        ))}
+      </div>
+      {modal && (
+        <Modal title={modal === 'new' ? 'Add Certification' : 'Edit Certification'} onClose={() => setModal(null)}>
+          <Field label="Title / Certificate Name" value={form.title} onChange={v => setForm({ ...form, title: v })} />
+          <Field label="Issuer / Organisation" value={form.issuer} onChange={v => setForm({ ...form, issuer: v })} />
+          <Field label="Tag" value={form.tag} onChange={v => setForm({ ...form, tag: v })} placeholder="e.g. Cloud · AWS / Research · Published" />
+          <Field label="Date Issued" value={form.date_issued} onChange={v => setForm({ ...form, date_issued: v })} placeholder="e.g. 2024 / Jan 2025" />
+          <Field label="Credential URL" value={form.credential_url ?? ''} onChange={v => setForm({ ...form, credential_url: v })} placeholder="https://..." />
+          <Field label="Description" value={form.description ?? ''} onChange={v => setForm({ ...form, description: v })} multiline />
+          <Field label="Image URL" value={form.image ?? ''} onChange={v => setForm({ ...form, image: v })} />
+          <Field label="Sort Order" value={String(form.sort_order)} onChange={v => setForm({ ...form, sort_order: parseInt(v) || 0 })} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+            <label style={{ color: '#aaa', fontSize: '0.8rem', fontWeight: 600 }}>Visibility</label>
+            <VisibleBadge visible={form.visible} onToggle={() => setForm({ ...form, visible: form.visible ? 0 : 1 })} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.8rem' }}>
+            <button onClick={() => setModal(null)} style={{ padding: '0.7rem 1.2rem', background: 'none', border: '1px solid #333', borderRadius: '8px', color: '#666', cursor: 'pointer' }}>Cancel</button>
+            <SaveBtn onClick={save} loading={saving} label={modal === 'new' ? 'Add Certification' : 'Save Changes'} />
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
 // ─── EDUCATION Section ────────────────────────────────────────────────────────
 function EducationSection() {
   const [items, setItems] = useState<Education[]>([]);
@@ -448,7 +511,7 @@ export default function AdminDashboard() {
     router.push('/admin/login');
   }
 
-  const sections: Section[] = ['about', 'projects', 'experience', 'skills', 'education'];
+  const sections: Section[] = ['about', 'projects', 'experience', 'skills', 'education', 'certifications'];
 
   return (
     <div style={{
@@ -567,6 +630,7 @@ export default function AdminDashboard() {
           {activeSection === 'experience' && <ExperienceSection />}
           {activeSection === 'skills' && <SkillsSection />}
           {activeSection === 'education' && <EducationSection />}
+          {activeSection === 'certifications' && <CertificationsSection />}
         </div>
       </main>
     </div>

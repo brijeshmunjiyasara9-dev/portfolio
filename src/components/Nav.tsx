@@ -8,6 +8,7 @@ const navLinks = [
   { href: '/experience', label: 'Experience' },
   { href: '/skills', label: 'Skills' },
   { href: '/education', label: 'Education' },
+  { href: '/certifications', label: 'Certifications' },
 ];
 
 export default function Nav() {
