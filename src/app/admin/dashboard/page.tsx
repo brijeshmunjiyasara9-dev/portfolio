@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-type Section = 'about' | 'projects' | 'experience' | 'skills' | 'education' | 'certifications';
+type Section = 'about' | 'projects' | 'experience' | 'skills' | 'education' | 'certifications' | 'profile';
 
 interface Project { id: number; num: string; name: string; tech: string; detail: string; image: string; description: string; github_url: string; website_url: string; visible: number; sort_order: number; }
 interface Experience { id: number; company: string; role: string; tag: string; period: string; description: string; image: string; status: string; visible: number; sort_order: number; }
@@ -21,6 +21,7 @@ const SECTION_META: Record<Section, { label: string; icon: string; color: string
   skills:         { label: 'Skills',         icon: '⚡', color: '#f59e0b' },
   education:      { label: 'Education',      icon: '🎓', color: '#ec4899' },
   certifications: { label: 'Certifications', icon: '🏆', color: '#f97316' },
+  profile:        { label: 'My Profile',     icon: '⚙️', color: '#a855f7' },
 };
 
 // ─── Shared Modal ─────────────────────────────────────────────────────────────
@@ -467,6 +468,338 @@ function EducationSection() {
 }
 
 // ─── Section Header ───────────────────────────────────────────────────────────
+// ─── PROFILE Section ─────────────────────────────────────────────────────────
+function ProfileSection() {
+  const [profile, setProfile] = useState({
+    username: '', display_name: '', email: '',
+    profile_image: '', resume_path: '', resume_original_name: '',
+  });
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+  const [imageUploading, setImageUploading] = useState(false);
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState('');
+
+  useEffect(() => {
+    fetch('/api/admin/profile').then(r => r.json()).then(data => {
+      if (!data.error) {
+        setProfile(data);
+        setImagePreview(data.profile_image || '');
+      }
+    });
+  }, []);
+
+  async function uploadFile(file: File, type: 'image' | 'resume') {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('type', type);
+    const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Upload failed');
+    return json;
+  }
+
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageUploading(true);
+    setError('');
+    try {
+      const data = await uploadFile(file, 'image');
+      setProfile(p => ({ ...p, profile_image: data.url }));
+      setImagePreview(data.url);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Image upload failed');
+    } finally {
+      setImageUploading(false);
+    }
+  }
+
+  async function handleResumeChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setResumeUploading(true);
+    setError('');
+    try {
+      const data = await uploadFile(file, 'resume');
+      setProfile(p => ({ ...p, resume_path: data.url, resume_original_name: data.originalName }));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Resume upload failed');
+    } finally {
+      setResumeUploading(false);
+    }
+  }
+
+  async function save() {
+    setError('');
+    if (newPassword && newPassword !== confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+    if (newPassword && newPassword.length < 8) {
+      setError('New password must be at least 8 characters');
+      return;
+    }
+    setSaving(true);
+    try {
+      const body: Record<string, string> = {
+        display_name: profile.display_name,
+        email: profile.email,
+        profile_image: profile.profile_image,
+        resume_path: profile.resume_path,
+        resume_original_name: profile.resume_original_name,
+      };
+      if (newPassword) {
+        body.current_password = currentPassword;
+        body.new_password = newPassword;
+      }
+      const res = await fetch('/api/admin/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Save failed');
+      setSaved(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '0.7rem 0.9rem',
+    background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '8px',
+    color: '#fff', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box',
+  };
+  const labelStyle: React.CSSProperties = {
+    display: 'block', color: '#aaa', fontSize: '0.75rem', fontWeight: 600,
+    marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em',
+  };
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div>
+          <h2 style={{ color: '#fff', margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>My Profile</h2>
+          <p style={{ color: '#555', fontSize: '0.8rem', margin: '4px 0 0' }}>
+            Update your name, email, password, profile photo and resume
+          </p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+          {saved && <span style={{ color: '#10b981', fontSize: '0.85rem' }}>✓ Saved!</span>}
+          <SaveBtn onClick={save} loading={saving} />
+        </div>
+      </div>
+
+      {error && (
+        <div style={{
+          background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+          borderRadius: '8px', padding: '0.8rem 1rem', marginBottom: '1.2rem',
+          color: '#ef4444', fontSize: '0.85rem',
+        }}>{error}</div>
+      )}
+
+      {/* Profile Photo Card */}
+      <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.2rem' }}>
+        <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem', marginBottom: '1rem' }}>Profile Photo</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+          {/* Image Preview */}
+          <div style={{
+            width: '100px', height: '100px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0,
+            background: '#1a1a1a', border: '2px solid #2a2a2a',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {imagePreview ? (
+              <img src={imagePreview} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span style={{ color: '#444', fontSize: '2.5rem' }}>👤</span>
+            )}
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ color: '#888', fontSize: '0.82rem', margin: '0 0 0.8rem' }}>
+              This image replaces the placeholder on your homepage About section.<br />
+              Accepted: JPG, PNG, WEBP, GIF, AVIF
+            </p>
+            <label style={{
+              display: 'inline-block', padding: '0.6rem 1.2rem',
+              background: imageUploading ? '#333' : 'rgba(99,102,241,0.15)',
+              border: '1px solid rgba(99,102,241,0.4)', borderRadius: '8px',
+              color: '#6366f1', cursor: imageUploading ? 'not-allowed' : 'pointer',
+              fontSize: '0.85rem', fontWeight: 600,
+            }}>
+              {imageUploading ? 'Uploading...' : imagePreview ? '🔄 Change Photo' : '📷 Upload Photo'}
+              <input
+                type="file" accept="image/*" style={{ display: 'none' }}
+                onChange={handleImageChange} disabled={imageUploading}
+              />
+            </label>
+            {imagePreview && (
+              <button
+                onClick={() => { setImagePreview(''); setProfile(p => ({ ...p, profile_image: '' })); }}
+                style={{
+                  marginLeft: '0.6rem', padding: '0.6rem 1rem',
+                  background: 'transparent', border: '1px solid #333', borderRadius: '8px',
+                  color: '#666', cursor: 'pointer', fontSize: '0.82rem',
+                }}>Remove</button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Resume Card */}
+      <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.2rem' }}>
+        <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem', marginBottom: '1rem' }}>Resume / CV</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', flexWrap: 'wrap' }}>
+          <div style={{
+            width: '64px', height: '64px', borderRadius: '10px', flexShrink: 0,
+            background: '#1a1a1a', border: '2px solid #2a2a2a',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '1.8rem',
+          }}>📄</div>
+          <div style={{ flex: 1 }}>
+            {profile.resume_path ? (
+              <div style={{ marginBottom: '0.5rem' }}>
+                <span style={{
+                  display: 'inline-block', background: 'rgba(16,185,129,0.1)',
+                  border: '1px solid rgba(16,185,129,0.3)', borderRadius: '6px',
+                  padding: '3px 10px', color: '#10b981', fontSize: '0.8rem', fontWeight: 600,
+                }}>✓ Resume uploaded</span>
+                <span style={{ marginLeft: '0.6rem', color: '#555', fontSize: '0.8rem' }}>
+                  {profile.resume_original_name}
+                </span>
+              </div>
+            ) : (
+              <div style={{ color: '#555', fontSize: '0.82rem', marginBottom: '0.5rem' }}>No resume uploaded yet</div>
+            )}
+            <p style={{ color: '#888', fontSize: '0.82rem', margin: '0 0 0.8rem' }}>
+              Visitors can download this from the homepage. Accepted: PDF, DOC, DOCX
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <label style={{
+                display: 'inline-block', padding: '0.6rem 1.2rem',
+                background: resumeUploading ? '#333' : 'rgba(99,102,241,0.15)',
+                border: '1px solid rgba(99,102,241,0.4)', borderRadius: '8px',
+                color: '#6366f1', cursor: resumeUploading ? 'not-allowed' : 'pointer',
+                fontSize: '0.85rem', fontWeight: 600,
+              }}>
+                {resumeUploading ? 'Uploading...' : profile.resume_path ? '🔄 Replace Resume' : '📤 Upload Resume'}
+                <input
+                  type="file" accept=".pdf,.doc,.docx" style={{ display: 'none' }}
+                  onChange={handleResumeChange} disabled={resumeUploading}
+                />
+              </label>
+              {profile.resume_path && (
+                <a
+                  href="/api/resume" target="_blank"
+                  style={{
+                    display: 'inline-block', padding: '0.6rem 1rem',
+                    background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)',
+                    borderRadius: '8px', color: '#10b981', fontSize: '0.82rem',
+                    textDecoration: 'none', fontWeight: 600,
+                  }}>👁 Preview</a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Basic Info Card */}
+      <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.2rem' }}>
+        <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem', marginBottom: '1rem' }}>Basic Information</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div>
+            <label style={labelStyle}>Username (login)</label>
+            <input type="text" value={profile.username} readOnly style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }} />
+            <span style={{ color: '#444', fontSize: '0.72rem' }}>Username cannot be changed</span>
+          </div>
+          <div>
+            <label style={labelStyle}>Display Name</label>
+            <input
+              type="text"
+              value={profile.display_name}
+              onChange={e => setProfile(p => ({ ...p, display_name: e.target.value }))}
+              placeholder="e.g. Brijesh Munjiyasara"
+              style={inputStyle}
+            />
+          </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={labelStyle}>Email Address</label>
+            <input
+              type="email"
+              value={profile.email}
+              onChange={e => setProfile(p => ({ ...p, email: e.target.value }))}
+              placeholder="e.g. brijesh@example.com"
+              style={inputStyle}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Password Card */}
+      <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem' }}>
+        <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.4rem' }}>Change Password</div>
+        <p style={{ color: '#555', fontSize: '0.8rem', margin: '0 0 1rem' }}>Leave blank to keep current password</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={labelStyle}>Current Password</label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={e => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>New Password</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              placeholder="Min 8 characters"
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Confirm New Password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              placeholder="Repeat new password"
+              style={{
+                ...inputStyle,
+                borderColor: confirmPassword && newPassword !== confirmPassword ? 'rgba(239,68,68,0.5)' : '#2a2a2a',
+              }}
+            />
+            {confirmPassword && newPassword !== confirmPassword && (
+              <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>Passwords do not match</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Save Button (bottom) */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem' }}>
+        {saved && <span style={{ color: '#10b981', fontSize: '0.85rem' }}>✓ Profile saved successfully!</span>}
+        {error && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{error}</span>}
+        <SaveBtn onClick={save} loading={saving} label="Save Profile" />
+      </div>
+    </div>
+  );
+}
+
 function SectionHeader({ title, subtitle, onAdd, count }: { title: string; subtitle: string; onAdd: () => void; count: number }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
@@ -511,7 +844,7 @@ export default function AdminDashboard() {
     router.push('/admin/login');
   }
 
-  const sections: Section[] = ['about', 'projects', 'experience', 'skills', 'education', 'certifications'];
+  const sections: Section[] = ['about', 'projects', 'experience', 'skills', 'education', 'certifications', 'profile'];
 
   return (
     <div style={{
@@ -631,6 +964,7 @@ export default function AdminDashboard() {
           {activeSection === 'skills' && <SkillsSection />}
           {activeSection === 'education' && <EducationSection />}
           {activeSection === 'certifications' && <CertificationsSection />}
+          {activeSection === 'profile' && <ProfileSection />}
         </div>
       </main>
     </div>
