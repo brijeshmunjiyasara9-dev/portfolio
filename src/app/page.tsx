@@ -14,10 +14,18 @@ export default function HomePage() {
     paragraph1: 'As an MTech student in Computer Science at Ahmedabad University, I specialise in machine learning, deep learning, and computer vision — turning complex datasets into actionable insights.',
     paragraph2: 'From flood-prediction models at BISAG-N (MeitY) to healthcare analytics at WebRepp HK, I bridge the gap between cutting-edge research and real deployable solutions.',
   });
+  const [profileInfo, setProfileInfo] = useState({
+    profile_image: '',
+    has_resume: false,
+    resume_original_name: '',
+  });
 
   useEffect(() => {
     fetch('/api/portfolio/about').then(r => r.json()).then(data => {
       if (data && data.headline) setAbout(data);
+    });
+    fetch('/api/portfolio/profile').then(r => r.json()).then(data => {
+      if (data) setProfileInfo(data);
     });
   }, []);
 
@@ -108,8 +116,13 @@ export default function HomePage() {
             <div className="places-images">
               <div className="place-img-wrap reveal-up">
                 <img
-                  src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=700&q=80&auto=format"
-                  alt="Deep Learning Research"
+                  src={
+                    profileInfo.profile_image
+                      ? profileInfo.profile_image
+                      : 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=700&q=80&auto=format'
+                  }
+                  alt="Profile"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               </div>
             </div>
@@ -122,9 +135,41 @@ export default function HomePage() {
             </h2>
             <p className="section-body reveal-up">{about.paragraph1}</p>
             <p className="section-body reveal-up">{about.paragraph2}</p>
-            <Link href="/projects" className="text-link reveal-up">
-              See My Work <span className="arrow">/</span>
-            </Link>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', flexWrap: 'wrap', marginTop: '1.5rem' }}>
+              <Link href="/projects" className="text-link reveal-up">
+                See My Work <span className="arrow">/</span>
+              </Link>
+              {profileInfo.has_resume && (
+                <a
+                  href="/api/resume"
+                  download
+                  className="reveal-up"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.6rem 1.4rem',
+                    background: 'rgba(99,102,241,0.12)',
+                    border: '1px solid rgba(99,102,241,0.35)',
+                    borderRadius: '8px',
+                    color: '#a5b4fc',
+                    fontWeight: 600,
+                    fontSize: '0.88rem',
+                    textDecoration: 'none',
+                    transition: 'background 0.2s, border-color 0.2s',
+                    letterSpacing: '0.02em',
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(99,102,241,0.22)';
+                    (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(99,102,241,0.6)';
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(99,102,241,0.12)';
+                    (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(99,102,241,0.35)';
+                  }}
+                >
+                  ↓ Download Resume
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </section>

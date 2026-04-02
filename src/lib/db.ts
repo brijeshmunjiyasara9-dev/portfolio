@@ -150,7 +150,12 @@ async function initSchema(db: DbAdapter) {
     CREATE TABLE IF NOT EXISTS admin (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL
+      password TEXT NOT NULL,
+      display_name TEXT NOT NULL DEFAULT '',
+      email TEXT NOT NULL DEFAULT '',
+      profile_image TEXT NOT NULL DEFAULT '',
+      resume_path TEXT NOT NULL DEFAULT '',
+      resume_original_name TEXT NOT NULL DEFAULT ''
     )
   `);
   await db.exec(`
@@ -232,6 +237,12 @@ async function initSchema(db: DbAdapter) {
   try { await db.exec(`ALTER TABLE projects ADD COLUMN description TEXT NOT NULL DEFAULT ''`); } catch {}
   try { await db.exec(`ALTER TABLE projects ADD COLUMN github_url TEXT NOT NULL DEFAULT ''`); } catch {}
   try { await db.exec(`ALTER TABLE projects ADD COLUMN website_url TEXT NOT NULL DEFAULT ''`); } catch {}
+  // Migrate: add new admin profile columns if they don't exist
+  try { await db.exec(`ALTER TABLE admin ADD COLUMN display_name TEXT NOT NULL DEFAULT ''`); } catch {}
+  try { await db.exec(`ALTER TABLE admin ADD COLUMN email TEXT NOT NULL DEFAULT ''`); } catch {}
+  try { await db.exec(`ALTER TABLE admin ADD COLUMN profile_image TEXT NOT NULL DEFAULT ''`); } catch {}
+  try { await db.exec(`ALTER TABLE admin ADD COLUMN resume_path TEXT NOT NULL DEFAULT ''`); } catch {}
+  try { await db.exec(`ALTER TABLE admin ADD COLUMN resume_original_name TEXT NOT NULL DEFAULT ''`); } catch {}
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
