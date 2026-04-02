@@ -74,6 +74,150 @@ Verifies the current session token (used by the dashboard on load).
 
 ---
 
+## Admin Profile Endpoints
+
+### GET `/api/admin/profile`
+
+Returns the current admin's profile. **Requires admin auth.**
+
+**Response** — `200 OK`
+
+```json
+{
+  "username": "brijesh",
+  "display_name": "Brijesh Munjiyasara",
+  "email": "brijesh@example.com",
+  "profile_image": "/uploads/profile_1234567890.png",
+  "resume_path": "/uploads/resume_1234567890.pdf",
+  "resume_original_name": "Brijesh_Resume.pdf"
+}
+```
+
+---
+
+### PUT `/api/admin/profile`
+
+Updates the admin profile. **Requires admin auth.**
+
+**Request Body** (all fields optional — only sent fields are used):
+
+```json
+{
+  "display_name": "Brijesh Munjiyasara",
+  "email": "brijesh@example.com",
+  "profile_image": "/uploads/profile_1234567890.png",
+  "resume_path": "/uploads/resume_1234567890.pdf",
+  "resume_original_name": "Brijesh_Resume.pdf",
+  "current_password": "oldpassword",
+  "new_password": "newpassword123"
+}
+```
+
+> `current_password` and `new_password` are only needed when changing the password.  
+> Send an empty string `""` for `profile_image` to clear the profile photo.
+
+**Response** — `200 OK`
+
+```json
+{ "success": true }
+```
+
+**Error Responses**
+
+| Status | Body | Reason |
+|---|---|---|
+| 400 | `{ "error": "Current password is required..." }` | Changing password without providing current |
+| 400 | `{ "error": "Current password is incorrect" }` | Wrong current password |
+| 401 | `{ "error": "Unauthorized" }` | Not logged in |
+
+---
+
+### POST `/api/admin/upload`
+
+Uploads a profile image or resume file. **Requires admin auth.**
+
+**Request**: `multipart/form-data`
+
+| Field | Type | Values |
+|---|---|---|
+| `file` | File | The file to upload |
+| `type` | string | `"image"` or `"resume"` |
+
+**Accepted formats:**
+- `image`: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.avif` (max 10 MB)
+- `resume`: `.pdf`, `.doc`, `.docx` (max 10 MB)
+
+**Response** — `200 OK`
+
+```json
+{
+  "success": true,
+  "url": "/uploads/profile_1234567890.png",
+  "originalName": "my-photo.png"
+}
+```
+
+The returned `url` is a path relative to the public root (e.g. accessible at `https://yoursite.com/uploads/profile_1234567890.png`).
+
+**Error Responses**
+
+| Status | Body | Reason |
+|---|---|---|
+| 400 | `{ "error": "File and type are required" }` | Missing file or type field |
+| 400 | `{ "error": "Invalid image format..." }` | File extension not allowed for images |
+| 400 | `{ "error": "Invalid resume format..." }` | File extension not allowed for resumes |
+| 401 | `{ "error": "Unauthorized" }` | Not logged in |
+| 500 | `{ "error": "Upload failed" }` | Filesystem write error |
+
+---
+
+## Public Profile Endpoint
+
+### GET `/api/portfolio/profile`
+
+Returns public profile data for the homepage. **No auth required.**
+
+**Response** — `200 OK`
+
+```json
+{
+  "display_name": "Brijesh Munjiyasara",
+  "email": "brijesh@example.com",
+  "profile_image": "/uploads/profile_1234567890.png",
+  "has_resume": true,
+  "resume_original_name": "Brijesh_Resume.pdf"
+}
+```
+
+- `profile_image` — empty string `""` if no photo uploaded
+- `profile_image` — empty string `""` if no photo has been uploaded  
+- `has_resume` — `true` when a resume has been uploaded; homepage Download button becomes active  
+- The Download Resume button is **always visible** on the homepage; `has_resume: false` renders it disabled/greyed
+
+---
+
+## Resume Download Endpoint
+
+### GET `/api/resume`
+
+Streams the uploaded resume as a file download. **No auth required.**
+
+**Response** — `200 OK`
+
+```
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="Brijesh_Resume.pdf"
+[binary file content]
+```
+
+**Error Responses**
+
+| Status | Reason |
+|---|---|
+| 404 | No resume has been uploaded yet |
+
+---
+
 ## Portfolio Data Endpoints
 
 ### About
