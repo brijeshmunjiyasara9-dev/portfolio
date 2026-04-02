@@ -228,10 +228,26 @@ async function initSchema(db: DbAdapter) {
       sort_order INTEGER DEFAULT 0
     )
   `);
+  // Profile table (single-row: admin editable name, email, photo, resume)
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS profile (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      display_name TEXT NOT NULL DEFAULT 'Brijesh Munjiyasara',
+      email TEXT NOT NULL DEFAULT 'brijesh.m@ahduni.edu.in',
+      profile_photo TEXT NOT NULL DEFAULT '',
+      about_photo TEXT NOT NULL DEFAULT '',
+      resume_url TEXT NOT NULL DEFAULT '',
+      resume_filename TEXT NOT NULL DEFAULT ''
+    )
+  `);
+
   // Migrate: add new columns to projects if they don't exist
   try { await db.exec(`ALTER TABLE projects ADD COLUMN description TEXT NOT NULL DEFAULT ''`); } catch {}
   try { await db.exec(`ALTER TABLE projects ADD COLUMN github_url TEXT NOT NULL DEFAULT ''`); } catch {}
   try { await db.exec(`ALTER TABLE projects ADD COLUMN website_url TEXT NOT NULL DEFAULT ''`); } catch {}
+
+  // Migrate: add new columns to admin if they don't exist
+  try { await db.exec(`ALTER TABLE admin ADD COLUMN email TEXT NOT NULL DEFAULT ''`); } catch {}
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -243,6 +259,15 @@ async function seedData(db: DbAdapter) {
   if (!adminExists) {
     const hash = bcrypt.hashSync('brijesh@admin2024', 10);
     await db.run('INSERT INTO admin (username, password) VALUES (?, ?)', ['brijesh', hash]);
+  }
+
+  // Profile (single-row seed)
+  const profileRow = await db.get('SELECT COUNT(*) as c FROM profile');
+  if ((profileRow?.c as number) === 0) {
+    await db.run(
+      'INSERT INTO profile (display_name, email, profile_photo, about_photo, resume_url, resume_filename) VALUES (?, ?, ?, ?, ?, ?)',
+      ['Brijesh Munjiyasara', 'brijesh.m@ahduni.edu.in', '', '', '', '']
+    );
   }
 
   // About

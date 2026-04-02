@@ -1175,3 +1175,37 @@ a  { text-decoration: none; color: inherit; }
     padding: 3rem 1.5rem 2rem;
   }
 }
+
+/* ── Resume Download Button ── */
+.resume-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.4rem;
+  background: transparent;
+  border: 1px solid var(--accent-dim);
+  border-radius: 30px;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: all 0.25s var(--ease);
+  margin-top: 1.2rem;
+  cursor: pointer;
+}
+.resume-download-btn:hover {
+  background: rgba(201,184,138,0.1);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.resume-download-btn svg {
+  flex-shrink: 0;
+}
+
+/* ── Footer Resume Link ── */
+.footer-resume-link {
+  color: var(--accent) !important;
+  font-weight: 500;
+}

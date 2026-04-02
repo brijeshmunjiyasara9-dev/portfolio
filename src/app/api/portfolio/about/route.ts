@@ -8,11 +8,18 @@ async function isAuthenticated(request: NextRequest) {
   return !!(await verifyToken(token));
 }
 
-// GET — public
+// GET — public: returns about content merged with profile photo
 export async function GET() {
   const db = await getDb();
   const about = await db.get('SELECT * FROM about WHERE id = 1');
-  return NextResponse.json(about || {});
+  const profile = await db.get('SELECT about_photo, resume_url, resume_filename, display_name FROM profile WHERE id = 1');
+  return NextResponse.json({
+    ...(about || {}),
+    about_photo: (profile as any)?.about_photo || '',
+    resume_url: (profile as any)?.resume_url || '',
+    resume_filename: (profile as any)?.resume_filename || '',
+    display_name: (profile as any)?.display_name || 'Brijesh Munjiyasara',
+  });
 }
 
 // PUT — admin only

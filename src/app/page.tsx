@@ -6,13 +6,21 @@ import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
 import { usePortfolioAnimations } from '@/components/usePortfolioAnimations';
 
+const DEFAULT_ABOUT_PHOTO = 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=700&q=80&auto=format';
+
 export default function HomePage() {
   usePortfolioAnimations();
 
-  const [about, setAbout] = useState({
+  const [about, setAbout] = useState<{
+    headline: string; paragraph1: string; paragraph2: string;
+    about_photo?: string; resume_url?: string; resume_filename?: string;
+  }>({
     headline: 'Passionate\nAbout Real-World\nAI Impact',
     paragraph1: 'As an MTech student in Computer Science at Ahmedabad University, I specialise in machine learning, deep learning, and computer vision — turning complex datasets into actionable insights.',
     paragraph2: 'From flood-prediction models at BISAG-N (MeitY) to healthcare analytics at WebRepp HK, I bridge the gap between cutting-edge research and real deployable solutions.',
+    about_photo: '',
+    resume_url: '',
+    resume_filename: '',
   });
 
   useEffect(() => {
@@ -108,8 +116,8 @@ export default function HomePage() {
             <div className="places-images">
               <div className="place-img-wrap reveal-up">
                 <img
-                  src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=700&q=80&auto=format"
-                  alt="Deep Learning Research"
+                  src={about.about_photo || DEFAULT_ABOUT_PHOTO}
+                  alt="Brijesh Munjiyasara"
                 />
               </div>
             </div>
@@ -125,6 +133,22 @@ export default function HomePage() {
             <Link href="/projects" className="text-link reveal-up">
               See My Work <span className="arrow">/</span>
             </Link>
+            {about.resume_url && (
+              <a
+                href={about.resume_url}
+                download={about.resume_filename || 'Brijesh_Munjiyasara_Resume.pdf'}
+                className="resume-download-btn reveal-up"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download Resume
+              </a>
+            )}
           </div>
         </div>
       </section>
