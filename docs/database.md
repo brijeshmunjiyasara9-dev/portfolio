@@ -17,17 +17,24 @@ The `getDb()` function in `src/lib/db.ts` automatically chooses the correct engi
 
 ### `admin`
 
-Stores admin credentials.
+Stores admin credentials and profile data (added via migration).
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
 | `id` | INTEGER | PK, AUTOINCREMENT | Internal ID |
 | `username` | TEXT | UNIQUE, NOT NULL | Login username |
 | `password` | TEXT | NOT NULL | bcrypt hash (rounds: 10) |
+| `display_name` | TEXT | default `''` | Public display name |
+| `email` | TEXT | default `''` | Contact email address |
+| `profile_image` | TEXT | default `''` | Path to uploaded photo e.g. `/uploads/profile_xxx.png` |
+| `resume_path` | TEXT | default `''` | Path to uploaded resume e.g. `/uploads/resume_xxx.pdf` |
+| `resume_original_name` | TEXT | default `''` | Original filename for download headers |
 
 **Default seed:**
 - Username: `brijesh`
 - Password: `brijesh@admin2024` (stored as bcrypt hash)
+
+> Profile columns (`display_name`, `email`, `profile_image`, `resume_path`, `resume_original_name`) are added via `ALTER TABLE` migrations on first run — safe to run against existing databases.
 
 ---
 
@@ -169,6 +176,8 @@ Return adapter (cached for lifetime of process)
 ```
 
 This is **idempotent** — safe to call multiple times. Tables and seed data are never duplicated.
+
+> The `admin` table has **profile columns added via `ALTER TABLE` migrations** (`display_name`, `email`, `profile_image`, `resume_path`, `resume_original_name`). These migrations use `IF NOT EXISTS`-style error handling and are safe to run on existing databases.
 
 ---
 

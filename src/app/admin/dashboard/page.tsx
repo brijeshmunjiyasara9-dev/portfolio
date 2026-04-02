@@ -482,36 +482,63 @@ function ProfileSection() {
   const [error, setError] = useState('');
   const [imageUploading, setImageUploading] = useState(false);
   const [resumeUploading, setResumeUploading] = useState(false);
-  const [imagePreview, setImagePreview] = useState('');
+  // toast messages for instant feedback on file uploads
+  const [imageToast, setImageToast]   = useState('');
+  const [resumeToast, setResumeToast] = useState('');
 
+  // ── Load current profile ──────────────────────────────────────────────────
   useEffect(() => {
-    fetch('/api/admin/profile').then(r => r.json()).then(data => {
-      if (!data.error) {
-        setProfile(data);
-        setImagePreview(data.profile_image || '');
-      }
-    });
+    fetch('/api/admin/profile', { credentials: 'same-origin' })
+      .then(r => r.json())
+      .then(data => { if (!data.error) setProfile(data); });
   }, []);
 
-  async function uploadFile(file: File, type: 'image' | 'resume') {
+  // ── Helper: upload file to disk ───────────────────────────────────────────
+  async function uploadFileToDisk(file: File, type: 'image' | 'resume') {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('type', type);
-    const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+    const res  = await fetch('/api/admin/upload', { method: 'POST', body: fd, credentials: 'same-origin' });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Upload failed');
-    return json;
+    return json as { success: boolean; url: string; originalName: string };
   }
 
+  // ── Helper: persist updated profile fields to DB immediately ─────────────
+  async function persistProfile(patch: Partial<typeof profile>) {
+    const merged = { ...profile, ...patch };
+    const res = await fetch('/api/admin/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        display_name:         merged.display_name,
+        email:                merged.email,
+        profile_image:        merged.profile_image,
+        resume_path:          merged.resume_path,
+        resume_original_name: merged.resume_original_name,
+      }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Save failed');
+  }
+
+  // ── Image upload — uploads to disk AND saves path to DB immediately ───────
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Reset input so same file can be re-selected later
+    e.target.value = '';
     setImageUploading(true);
+    setImageToast('');
     setError('');
     try {
-      const data = await uploadFile(file, 'image');
-      setProfile(p => ({ ...p, profile_image: data.url }));
-      setImagePreview(data.url);
+      const data   = await uploadFileToDisk(file, 'image');
+      const patch  = { profile_image: data.url };
+      await persistProfile(patch);              // ← save to DB right away
+      setProfile(p => ({ ...p, ...patch }));
+      setImageToast('✓ Photo saved!');
+      setTimeout(() => setImageToast(''), 3000);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Image upload failed');
     } finally {
@@ -519,14 +546,21 @@ function ProfileSection() {
     }
   }
 
+  // ── Resume upload — uploads to disk AND saves path to DB immediately ──────
   async function handleResumeChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = '';
     setResumeUploading(true);
+    setResumeToast('');
     setError('');
     try {
-      const data = await uploadFile(file, 'resume');
-      setProfile(p => ({ ...p, resume_path: data.url, resume_original_name: data.originalName }));
+      const data  = await uploadFileToDisk(file, 'resume');
+      const patch = { resume_path: data.url, resume_original_name: data.originalName };
+      await persistProfile(patch);              // ← save to DB right away
+      setProfile(p => ({ ...p, ...patch }));
+      setResumeToast('✓ Resume saved!');
+      setTimeout(() => setResumeToast(''), 3000);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Resume upload failed');
     } finally {
@@ -534,32 +568,41 @@ function ProfileSection() {
     }
   }
 
+  // ── Remove profile image ──────────────────────────────────────────────────
+  async function removeImage() {
+    const patch = { profile_image: '' };
+    try {
+      await persistProfile(patch);
+      setProfile(p => ({ ...p, ...patch }));
+    } catch {/* ignore */ }
+  }
+
+  // ── Save name / email / password ──────────────────────────────────────────
   async function save() {
     setError('');
     if (newPassword && newPassword !== confirmPassword) {
-      setError('New passwords do not match');
-      return;
+      setError('New passwords do not match'); return;
     }
     if (newPassword && newPassword.length < 8) {
-      setError('New password must be at least 8 characters');
-      return;
+      setError('New password must be at least 8 characters'); return;
     }
     setSaving(true);
     try {
       const body: Record<string, string> = {
-        display_name: profile.display_name,
-        email: profile.email,
-        profile_image: profile.profile_image,
-        resume_path: profile.resume_path,
+        display_name:         profile.display_name,
+        email:                profile.email,
+        profile_image:        profile.profile_image,
+        resume_path:          profile.resume_path,
         resume_original_name: profile.resume_original_name,
       };
       if (newPassword) {
         body.current_password = currentPassword;
-        body.new_password = newPassword;
+        body.new_password     = newPassword;
       }
-      const res = await fetch('/api/admin/profile', {
+      const res  = await fetch('/api/admin/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify(body),
       });
       const json = await res.json();
@@ -588,20 +631,21 @@ function ProfileSection() {
 
   return (
     <div>
-      {/* Header */}
+      {/* ── Page Header ──────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <div>
           <h2 style={{ color: '#fff', margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>My Profile</h2>
           <p style={{ color: '#555', fontSize: '0.8rem', margin: '4px 0 0' }}>
-            Update your name, email, password, profile photo and resume
+            Photo &amp; Resume save instantly on upload · Name/Email/Password saved via button below
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
           {saved && <span style={{ color: '#10b981', fontSize: '0.85rem' }}>✓ Saved!</span>}
-          <SaveBtn onClick={save} loading={saving} />
+          <SaveBtn onClick={save} loading={saving} label="Save Info" />
         </div>
       </div>
 
+      {/* ── Global error banner ──────────────────────────────────────────── */}
       {error && (
         <div style={{
           background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
@@ -610,118 +654,162 @@ function ProfileSection() {
         }}>{error}</div>
       )}
 
-      {/* Profile Photo Card */}
+      {/* ── Profile Photo Card ───────────────────────────────────────────── */}
       <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.2rem' }}>
-        <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem', marginBottom: '1rem' }}>Profile Photo</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-          {/* Image Preview */}
-          <div style={{
-            width: '100px', height: '100px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0,
-            background: '#1a1a1a', border: '2px solid #2a2a2a',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            {imagePreview ? (
-              <img src={imagePreview} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <span style={{ color: '#444', fontSize: '2.5rem' }}>👤</span>
-            )}
-          </div>
-          <div style={{ flex: 1 }}>
-            <p style={{ color: '#888', fontSize: '0.82rem', margin: '0 0 0.8rem' }}>
-              This image replaces the placeholder on your homepage About section.<br />
-              Accepted: JPG, PNG, WEBP, GIF, AVIF
-            </p>
-            <label style={{
-              display: 'inline-block', padding: '0.6rem 1.2rem',
-              background: imageUploading ? '#333' : 'rgba(99,102,241,0.15)',
-              border: '1px solid rgba(99,102,241,0.4)', borderRadius: '8px',
-              color: '#6366f1', cursor: imageUploading ? 'not-allowed' : 'pointer',
-              fontSize: '0.85rem', fontWeight: 600,
-            }}>
-              {imageUploading ? 'Uploading...' : imagePreview ? '🔄 Change Photo' : '📷 Upload Photo'}
-              <input
-                type="file" accept="image/*" style={{ display: 'none' }}
-                onChange={handleImageChange} disabled={imageUploading}
-              />
-            </label>
-            {imagePreview && (
-              <button
-                onClick={() => { setImagePreview(''); setProfile(p => ({ ...p, profile_image: '' })); }}
-                style={{
-                  marginLeft: '0.6rem', padding: '0.6rem 1rem',
-                  background: 'transparent', border: '1px solid #333', borderRadius: '8px',
-                  color: '#666', cursor: 'pointer', fontSize: '0.82rem',
-                }}>Remove</button>
-            )}
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>Profile Photo</div>
+          {imageToast && <span style={{ color: '#10b981', fontSize: '0.82rem', fontWeight: 600 }}>{imageToast}</span>}
         </div>
-      </div>
-
-      {/* Resume Card */}
-      <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.2rem' }}>
-        <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem', marginBottom: '1rem' }}>Resume / CV</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+          {/* Preview box */}
           <div style={{
-            width: '64px', height: '64px', borderRadius: '10px', flexShrink: 0,
-            background: '#1a1a1a', border: '2px solid #2a2a2a',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.8rem',
-          }}>📄</div>
-          <div style={{ flex: 1 }}>
-            {profile.resume_path ? (
-              <div style={{ marginBottom: '0.5rem' }}>
-                <span style={{
-                  display: 'inline-block', background: 'rgba(16,185,129,0.1)',
-                  border: '1px solid rgba(16,185,129,0.3)', borderRadius: '6px',
-                  padding: '3px 10px', color: '#10b981', fontSize: '0.8rem', fontWeight: 600,
-                }}>✓ Resume uploaded</span>
-                <span style={{ marginLeft: '0.6rem', color: '#555', fontSize: '0.8rem' }}>
-                  {profile.resume_original_name}
-                </span>
-              </div>
+            width: '110px', height: '110px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0,
+            background: '#1a1a1a', border: `2px solid ${profile.profile_image ? '#6366f1' : '#2a2a2a'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
+          }}>
+            {profile.profile_image ? (
+              <img
+                src={profile.profile_image}
+                alt="Profile"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
             ) : (
-              <div style={{ color: '#555', fontSize: '0.82rem', marginBottom: '0.5rem' }}>No resume uploaded yet</div>
+              <span style={{ color: '#444', fontSize: '3rem' }}>👤</span>
             )}
-            <p style={{ color: '#888', fontSize: '0.82rem', margin: '0 0 0.8rem' }}>
-              Visitors can download this from the homepage. Accepted: PDF, DOC, DOCX
+          </div>
+
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <p style={{ color: '#888', fontSize: '0.82rem', margin: '0 0 0.9rem', lineHeight: 1.5 }}>
+              Uploads instantly and appears on your homepage About section.<br />
+              <span style={{ color: '#555' }}>Accepted: JPG, PNG, WEBP, GIF, AVIF</span>
             </p>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
               <label style={{
-                display: 'inline-block', padding: '0.6rem 1.2rem',
-                background: resumeUploading ? '#333' : 'rgba(99,102,241,0.15)',
-                border: '1px solid rgba(99,102,241,0.4)', borderRadius: '8px',
-                color: '#6366f1', cursor: resumeUploading ? 'not-allowed' : 'pointer',
+                display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                padding: '0.6rem 1.2rem',
+                background: imageUploading ? '#1e1e1e' : 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+                border: 'none', borderRadius: '8px',
+                color: imageUploading ? '#555' : '#fff',
+                cursor: imageUploading ? 'not-allowed' : 'pointer',
                 fontSize: '0.85rem', fontWeight: 600,
               }}>
-                {resumeUploading ? 'Uploading...' : profile.resume_path ? '🔄 Replace Resume' : '📤 Upload Resume'}
+                {imageUploading
+                  ? <><span style={{ display: 'inline-block', width: '14px', height: '14px', border: '2px solid #555', borderTopColor: '#aaa', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> Uploading…</>
+                  : profile.profile_image ? '🔄 Change Photo' : '📷 Upload Photo'
+                }
                 <input
-                  type="file" accept=".pdf,.doc,.docx" style={{ display: 'none' }}
-                  onChange={handleResumeChange} disabled={resumeUploading}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                  style={{ display: 'none' }}
+                  onChange={handleImageChange}
+                  disabled={imageUploading}
                 />
               </label>
-              {profile.resume_path && (
-                <a
-                  href="/api/resume" target="_blank"
+              {profile.profile_image && !imageUploading && (
+                <button
+                  onClick={removeImage}
                   style={{
-                    display: 'inline-block', padding: '0.6rem 1rem',
-                    background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)',
-                    borderRadius: '8px', color: '#10b981', fontSize: '0.82rem',
-                    textDecoration: 'none', fontWeight: 600,
-                  }}>👁 Preview</a>
+                    padding: '0.6rem 1rem', background: 'transparent',
+                    border: '1px solid #333', borderRadius: '8px',
+                    color: '#666', cursor: 'pointer', fontSize: '0.82rem',
+                  }}>✕ Remove</button>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Basic Info Card */}
+      {/* ── Resume / CV Card ─────────────────────────────────────────────── */}
+      <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>Resume / CV</div>
+          {resumeToast && <span style={{ color: '#10b981', fontSize: '0.82rem', fontWeight: 600 }}>{resumeToast}</span>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.2rem', flexWrap: 'wrap' }}>
+          {/* Icon */}
+          <div style={{
+            width: '70px', height: '70px', borderRadius: '10px', flexShrink: 0,
+            background: profile.resume_path ? 'rgba(16,185,129,0.08)' : '#1a1a1a',
+            border: `2px solid ${profile.resume_path ? 'rgba(16,185,129,0.3)' : '#2a2a2a'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem',
+          }}>📄</div>
+
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            {/* Status row */}
+            <div style={{ marginBottom: '0.6rem' }}>
+              {profile.resume_path ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <span style={{
+                    display: 'inline-block', background: 'rgba(16,185,129,0.12)',
+                    border: '1px solid rgba(16,185,129,0.35)', borderRadius: '6px',
+                    padding: '3px 12px', color: '#10b981', fontSize: '0.78rem', fontWeight: 700,
+                  }}>✓ Resume live</span>
+                  <span style={{ color: '#666', fontSize: '0.8rem', wordBreak: 'break-all' }}>
+                    {profile.resume_original_name}
+                  </span>
+                </div>
+              ) : (
+                <span style={{ color: '#555', fontSize: '0.82rem' }}>
+                  No resume uploaded — visitors won&apos;t see a download button yet.
+                </span>
+              )}
+            </div>
+
+            <p style={{ color: '#888', fontSize: '0.82rem', margin: '0 0 0.9rem', lineHeight: 1.5 }}>
+              Uploads instantly. Visitors get a &quot;Download Resume&quot; button on the homepage.<br />
+              <span style={{ color: '#555' }}>Accepted: PDF, DOC, DOCX (max 10 MB)</span>
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <label style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                padding: '0.6rem 1.2rem',
+                background: resumeUploading ? '#1e1e1e' : 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+                border: 'none', borderRadius: '8px',
+                color: resumeUploading ? '#555' : '#fff',
+                cursor: resumeUploading ? 'not-allowed' : 'pointer',
+                fontSize: '0.85rem', fontWeight: 600,
+              }}>
+                {resumeUploading
+                  ? <><span style={{ display: 'inline-block', width: '14px', height: '14px', border: '2px solid #555', borderTopColor: '#aaa', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> Uploading…</>
+                  : profile.resume_path ? '🔄 Replace Resume' : '📤 Upload Resume'
+                }
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  style={{ display: 'none' }}
+                  onChange={handleResumeChange}
+                  disabled={resumeUploading}
+                />
+              </label>
+              {profile.resume_path && !resumeUploading && (
+                <a
+                  href="/api/resume"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                    padding: '0.6rem 1rem',
+                    background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)',
+                    borderRadius: '8px', color: '#10b981', fontSize: '0.82rem',
+                    textDecoration: 'none', fontWeight: 600,
+                  }}>👁 Preview / Download</a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Basic Info Card ──────────────────────────────────────────────── */}
       <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.2rem' }}>
         <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem', marginBottom: '1rem' }}>Basic Information</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div>
             <label style={labelStyle}>Username (login)</label>
-            <input type="text" value={profile.username} readOnly style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }} />
-            <span style={{ color: '#444', fontSize: '0.72rem' }}>Username cannot be changed</span>
+            <input type="text" value={profile.username} readOnly
+              style={{ ...inputStyle, opacity: 0.45, cursor: 'not-allowed' }} />
+            <span style={{ color: '#444', fontSize: '0.72rem' }}>Cannot be changed</span>
           </div>
           <div>
             <label style={labelStyle}>Display Name</label>
@@ -746,10 +834,10 @@ function ProfileSection() {
         </div>
       </div>
 
-      {/* Password Card */}
+      {/* ── Change Password Card ─────────────────────────────────────────── */}
       <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem' }}>
-        <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.4rem' }}>Change Password</div>
-        <p style={{ color: '#555', fontSize: '0.8rem', margin: '0 0 1rem' }}>Leave blank to keep current password</p>
+        <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.3rem' }}>Change Password</div>
+        <p style={{ color: '#555', fontSize: '0.8rem', margin: '0 0 1rem' }}>Leave all three blank to keep your current password unchanged</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div style={{ gridColumn: '1 / -1' }}>
             <label style={labelStyle}>Current Password</label>
@@ -757,8 +845,9 @@ function ProfileSection() {
               type="password"
               value={currentPassword}
               onChange={e => setCurrentPassword(e.target.value)}
-              placeholder="Enter current password"
+              placeholder="Enter your current password"
               style={inputStyle}
+              autoComplete="current-password"
             />
           </div>
           <div>
@@ -767,8 +856,9 @@ function ProfileSection() {
               type="password"
               value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
-              placeholder="Min 8 characters"
+              placeholder="Minimum 8 characters"
               style={inputStyle}
+              autoComplete="new-password"
             />
           </div>
           <div>
@@ -780,22 +870,36 @@ function ProfileSection() {
               placeholder="Repeat new password"
               style={{
                 ...inputStyle,
-                borderColor: confirmPassword && newPassword !== confirmPassword ? 'rgba(239,68,68,0.5)' : '#2a2a2a',
+                borderColor: confirmPassword && newPassword !== confirmPassword
+                  ? 'rgba(239,68,68,0.55)' : '#2a2a2a',
               }}
+              autoComplete="new-password"
             />
             {confirmPassword && newPassword !== confirmPassword && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>Passwords do not match</span>
+              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                Passwords do not match
+              </span>
             )}
           </div>
         </div>
       </div>
 
-      {/* Save Button (bottom) */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem' }}>
-        {saved && <span style={{ color: '#10b981', fontSize: '0.85rem' }}>✓ Profile saved successfully!</span>}
-        {error && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{error}</span>}
-        <SaveBtn onClick={save} loading={saving} label="Save Profile" />
+      {/* ── Bottom Save Bar ──────────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem',
+        padding: '1rem 1.2rem', background: '#0d0d0d',
+        border: '1px solid #1e1e1e', borderRadius: '10px',
+      }}>
+        {saved  && <span style={{ color: '#10b981', fontSize: '0.85rem' }}>✓ Info saved successfully!</span>}
+        {error  && !saving && <span style={{ color: '#ef4444', fontSize: '0.85rem' }}>{error}</span>}
+        <span style={{ color: '#555', fontSize: '0.78rem' }}>
+          Photo &amp; Resume are saved automatically on upload
+        </span>
+        <SaveBtn onClick={save} loading={saving} label="Save Name / Email / Password" />
       </div>
+
+      {/* Spinner keyframe */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

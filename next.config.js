@@ -7,15 +7,14 @@ const nextConfig = {
         hostname: 'images.unsplash.com',
       },
     ],
-
+    // Allow locally-uploaded images served from /uploads/
+    // (Next.js Image component – only needed if you use <Image />;
+    //  plain <img> tags work without this config)
+    unoptimized: false,
   },
   experimental: {
     // Treat native modules as external so they are not bundled by webpack
     serverComponentsExternalPackages: ['better-sqlite3', 'bcryptjs'],
-  },
-  // Increase body size limit for file uploads (10 MB)
-  serverRuntimeConfig: {
-    maxRequestBodySize: '10mb',
   },
 };
 

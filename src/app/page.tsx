@@ -6,6 +6,81 @@ import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
 import { usePortfolioAnimations } from '@/components/usePortfolioAnimations';
 
+/* ── Resume Download Button ─────────────────────────────────────────────── */
+function ResumeButton({ hasResume }: { hasResume: boolean }) {
+  const [hovered, setHovered] = useState(false);
+
+  const downloadIcon = (
+    <svg
+      width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+      style={{ flexShrink: 0 }}
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+
+  // When resume is uploaded — active, clickable download link
+  if (hasResume) {
+    return (
+      <a
+        href="/api/resume"
+        download
+        className="reveal-up"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.45rem',
+          padding: '0.65rem 1.5rem',
+          background: hovered ? 'rgba(99,102,241,0.22)' : 'rgba(99,102,241,0.10)',
+          border: `1px solid ${hovered ? 'rgba(99,102,241,0.65)' : 'rgba(99,102,241,0.35)'}`,
+          borderRadius: '8px',
+          color: hovered ? '#c4b5fd' : '#a5b4fc',
+          fontWeight: 600,
+          fontSize: '0.88rem',
+          textDecoration: 'none',
+          transition: 'background 0.2s, border-color 0.2s, color 0.2s',
+          letterSpacing: '0.025em',
+          cursor: 'pointer',
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        {downloadIcon}
+        Download Resume
+      </a>
+    );
+  }
+
+  // When no resume yet — visible but non-functional placeholder
+  return (
+    <span
+      className="reveal-up"
+      title="Resume coming soon"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.45rem',
+        padding: '0.65rem 1.5rem',
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: '8px',
+        color: 'rgba(255,255,255,0.25)',
+        fontWeight: 600,
+        fontSize: '0.88rem',
+        letterSpacing: '0.025em',
+        cursor: 'not-allowed',
+        userSelect: 'none',
+      }}
+    >
+      {downloadIcon}
+      Download Resume
+    </span>
+  );
+}
+
 export default function HomePage() {
   usePortfolioAnimations();
 
@@ -135,40 +210,12 @@ export default function HomePage() {
             </h2>
             <p className="section-body reveal-up">{about.paragraph1}</p>
             <p className="section-body reveal-up">{about.paragraph2}</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', flexWrap: 'wrap', marginTop: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', flexWrap: 'wrap', marginTop: '1.8rem' }}>
               <Link href="/projects" className="text-link reveal-up">
                 See My Work <span className="arrow">/</span>
               </Link>
-              {profileInfo.has_resume && (
-                <a
-                  href="/api/resume"
-                  download
-                  className="reveal-up"
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                    padding: '0.6rem 1.4rem',
-                    background: 'rgba(99,102,241,0.12)',
-                    border: '1px solid rgba(99,102,241,0.35)',
-                    borderRadius: '8px',
-                    color: '#a5b4fc',
-                    fontWeight: 600,
-                    fontSize: '0.88rem',
-                    textDecoration: 'none',
-                    transition: 'background 0.2s, border-color 0.2s',
-                    letterSpacing: '0.02em',
-                  }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(99,102,241,0.22)';
-                    (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(99,102,241,0.6)';
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(99,102,241,0.12)';
-                    (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(99,102,241,0.35)';
-                  }}
-                >
-                  ↓ Download Resume
-                </a>
-              )}
+              {/* Resume download button — always shown, active only when resume exists */}
+              <ResumeButton hasResume={profileInfo.has_resume} />
             </div>
           </div>
         </div>

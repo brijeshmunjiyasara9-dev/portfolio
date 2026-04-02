@@ -1,6 +1,6 @@
 # Admin Panel Guide
 
-The portfolio includes a built-in CMS (Content Management System) that lets you update every section of the public-facing site without touching code.
+The portfolio includes a built-in CMS (Content Management System) that lets you update every section of the public-facing site — including your profile photo, resume, and credentials — without touching code.
 
 ---
 
@@ -13,6 +13,8 @@ The portfolio includes a built-in CMS (Content Management System) that lets you 
 3. You will be redirected to `/admin/dashboard`
 
 > The session lasts **24 hours**. After that you will be automatically logged out and redirected to the login page.
+
+> **Security note**: Change the default password immediately using the **My Profile** (⚙️) tab.
 
 ---
 
@@ -29,6 +31,8 @@ The dashboard has a collapsible **sidebar** on the left and a **content area** o
 | 💼 | Experience | Work experience cards |
 | ⚡ | Skills | Skill categories and tech stack |
 | 🎓 | Education | Degrees, certifications, research |
+| 🏆 | Certifications | Certification cards with credential links |
+| ⚙️ | My Profile | Name, email, password, profile photo, resume |
 
 Click the **◀ / ▶** button to collapse or expand the sidebar.
 
@@ -38,7 +42,53 @@ At the bottom of the sidebar:
 
 ---
 
-## Managing Each Section
+## My Profile (⚙️)
+
+The **My Profile** section lets you manage your personal admin settings and the files that appear on the public site.
+
+### Profile Photo
+
+- Click **📷 Upload Photo** to choose an image from your device
+- Accepted formats: **JPG, PNG, WEBP, GIF, AVIF**
+- The photo is **saved instantly** as soon as you pick the file — no extra "Save" button needed
+- Once uploaded, the photo **replaces the placeholder image** in the About section of the homepage
+- Click **✕ Remove** to clear the photo (the Unsplash placeholder will return)
+
+### Resume / CV
+
+- Click **📤 Upload Resume** to choose your resume file
+- Accepted formats: **PDF, DOC, DOCX** (max ~10 MB)
+- The resume is **saved instantly** as soon as you pick the file
+- Once uploaded, a **"Download Resume"** button appears automatically on the homepage About section for all visitors
+- Click **🔄 Replace Resume** to upload a new version at any time
+- Click **👁 Preview / Download** to open the current resume in a new tab and verify it
+
+### Basic Information
+
+| Field | Description |
+|---|---|
+| Username | Your login username — **cannot be changed** |
+| Display Name | Your full name as it may appear publicly |
+| Email Address | Contact email stored in your profile |
+
+Click **Save Name / Email / Password** after editing these fields.
+
+### Change Password
+
+| Field | Description |
+|---|---|
+| Current Password | Your existing password (required to change) |
+| New Password | Must be at least 8 characters |
+| Confirm New Password | Must match the new password |
+
+Leave all three password fields **blank** to keep your current password unchanged.
+
+> Photo and Resume are saved to the database **immediately on upload**.  
+> Name, email, and password changes require clicking **"Save Name / Email / Password"**.
+
+---
+
+## Managing Content Sections
 
 ### About
 
@@ -83,7 +133,7 @@ Displays a list of all projects. Each project card shows:
 
 #### Hiding a Project
 
-Click the **● Visible** badge to toggle it to **● Hidden**. The project stays in the database but is not shown to public visitors. Only you (when logged in as admin) can see it in the CMS.
+Click the **● Visible** badge to toggle it to **● Hidden**. The project stays in the database but is not shown to public visitors.
 
 #### Deleting a Project
 
@@ -142,12 +192,30 @@ Manage degrees, certifications, and research entries. Fields:
 
 ---
 
+### Certifications
+
+Manage certification cards. Fields:
+
+| Field | Description |
+|---|---|
+| Title | Certificate name |
+| Issuer | Issuing organisation |
+| Tag | e.g. `Cloud · AWS` |
+| Date Issued | e.g. `2024` or `Jan 2025` |
+| Credential URL | Link to verify the certificate online |
+| Description | Details about the certification |
+| Image URL | Cover image for the card |
+| Sort Order | Display order |
+| Visibility | Show/hide on public site |
+
+---
+
 ## Visibility System
 
 Every content item (except About) has a **visible** flag:
 
 - **● Visible** (green) — item is shown to all public visitors
-- **● Hidden** (red) — item is hidden from public; only you see it in the admin dashboard
+- **● Hidden** (red) — item is hidden from public; only visible in the admin dashboard
 
 This lets you draft content and show it only when ready, or temporarily hide items without deleting them.
 
@@ -159,45 +227,28 @@ This lets you draft content and show it only when ready, or temporarily hide ite
 - All API mutation endpoints (`POST`, `PUT`, `DELETE`) verify the token server-side on every request.
 - The middleware runs at the **Next.js Edge** layer — unauthenticated requests to `/admin/*` are redirected before they even reach the page component.
 - After 24 hours of inactivity your session expires automatically.
+- The upload API (`/api/admin/upload`) requires authentication — visitors cannot upload files.
 
 ---
 
-## Changing Your Password
+## How the Resume Download Works
 
-Currently passwords are set via the database seed. To change your admin password:
+1. Go to **⚙️ My Profile** → **Resume / CV**
+2. Click **📤 Upload Resume** and choose your PDF/DOC/DOCX file
+3. The file is uploaded and saved to the database immediately
+4. The **"Download Resume"** button on the homepage About section becomes **active and clickable**
+5. Visitors click it → browser downloads your resume directly
 
-**Option 1 — Update the seed (for fresh deployments)**
+> The "Download Resume" button is **always visible** on the homepage. Before a resume is uploaded it appears greyed out/disabled. Once you upload a resume, it becomes active automatically — no code changes needed.
 
-Edit `src/lib/db.ts`, find the `seedData` function, and change:
+The download endpoint is `/api/resume` — it streams the file with the original filename as the download name.
 
-```typescript
-const hash = bcrypt.hashSync('your-new-password', 10);
-await db.run('INSERT INTO admin (username, password) VALUES (?, ?)', ['brijesh', hash]);
-```
+---
 
-**Option 2 — Update directly in Turso (production)**
+## How the Profile Photo Works
 
-Using the Turso CLI:
-
-```bash
-# Connect to your database
-turso db shell portfolio-admin
-
-# Generate a new hash first (run in Node.js locally)
-# node -e "const b=require('bcryptjs'); console.log(b.hashSync('newpassword',10))"
-
-# Then run in Turso shell:
-UPDATE admin SET password = '$2a$10$yourNewHashHere' WHERE username = 'brijesh';
-```
-
-**Option 3 — Update in local SQLite**
-
-```bash
-node -e "
-const db = require('better-sqlite3')('./data/portfolio.db');
-const bcrypt = require('bcryptjs');
-const hash = bcrypt.hashSync('newpassword', 10);
-db.prepare('UPDATE admin SET password=? WHERE username=?').run(hash, 'brijesh');
-console.log('Password updated');
-"
-```
+1. Go to **⚙️ My Profile** → **Profile Photo**
+2. Click **📷 Upload Photo** and choose your image
+3. The image is uploaded and saved immediately
+4. The homepage About section now shows your photo instead of the default placeholder
+5. To revert to the placeholder, click **✕ Remove**
