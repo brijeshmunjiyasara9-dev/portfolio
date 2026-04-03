@@ -7,10 +7,7 @@ const nextConfig = {
         hostname: 'images.unsplash.com',
       },
     ],
-    // Allow locally-uploaded images served from /uploads/
-    // (Next.js Image component – only needed if you use <Image />;
-    //  plain <img> tags work without this config)
-    unoptimized: false,
+    unoptimized: true,
   },
   experimental: {
     // Treat native modules as external so they are not bundled by webpack
