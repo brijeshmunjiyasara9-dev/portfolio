@@ -233,6 +233,19 @@ async function initSchema(db: DbAdapter) {
       sort_order INTEGER DEFAULT 0
     )
   `);
+  // uploads table — stores binary files in the database so uploads work on
+  // read-only serverless environments (Vercel, etc.) without any external
+  // object-storage service.
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS uploads (
+      id        INTEGER PRIMARY KEY AUTOINCREMENT,
+      key       TEXT UNIQUE NOT NULL,
+      mime_type TEXT NOT NULL,
+      filename  TEXT NOT NULL DEFAULT '',
+      data      TEXT NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT 0
+    )
+  `);
   // Migrate: add new columns to projects if they don't exist
   try { await db.exec(`ALTER TABLE projects ADD COLUMN description TEXT NOT NULL DEFAULT ''`); } catch {}
   try { await db.exec(`ALTER TABLE projects ADD COLUMN github_url TEXT NOT NULL DEFAULT ''`); } catch {}
