@@ -1,26 +1,29 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+// Server Component — data fetched on the server at request time.
+import { getDb } from '@/lib/db';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
-import { usePortfolioAnimations } from '@/components/usePortfolioAnimations';
+import AnimationsClient from '@/components/AnimationsClient';
+
+export const dynamic = 'force-dynamic';
 
 interface Education {
-  id: number; title: string; institution: string; tag: string; period: string; description: string;
+  id: number;
+  title: string;
+  institution: string;
+  tag: string;
+  period: string;
+  description: string;
 }
 
-export default function EducationPage() {
-  usePortfolioAnimations();
-  const [items, setItems] = useState<Education[]>([]);
-
-  useEffect(() => {
-    fetch('/api/portfolio/education')
-      .then(r => r.json())
-      .then(data => setItems(Array.isArray(data) ? data : []));
-  }, []);
+export default async function EducationPage() {
+  const db = await getDb();
+  const items = (await db.all(
+    'SELECT * FROM education WHERE visible = 1 ORDER BY sort_order ASC'
+  )) as unknown as Education[];
 
   return (
     <>
+      <AnimationsClient />
       <div className="grain-overlay"></div>
       <Nav />
 

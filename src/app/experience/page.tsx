@@ -1,27 +1,31 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+// Server Component — data fetched on the server at request time.
+import { getDb } from '@/lib/db';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
-import { usePortfolioAnimations } from '@/components/usePortfolioAnimations';
+import AnimationsClient from '@/components/AnimationsClient';
+
+export const dynamic = 'force-dynamic';
 
 interface Experience {
-  id: number; company: string; role: string; tag: string; period: string;
-  description: string; image: string; status: string;
+  id: number;
+  company: string;
+  role: string;
+  tag: string;
+  period: string;
+  description: string;
+  image: string;
+  status: string;
 }
 
-export default function ExperiencePage() {
-  usePortfolioAnimations();
-  const [experiences, setExperiences] = useState<Experience[]>([]);
-
-  useEffect(() => {
-    fetch('/api/portfolio/experience')
-      .then(r => r.json())
-      .then(data => setExperiences(Array.isArray(data) ? data : []));
-  }, []);
+export default async function ExperiencePage() {
+  const db = await getDb();
+  const experiences = (await db.all(
+    'SELECT * FROM experience WHERE visible = 1 ORDER BY sort_order ASC'
+  )) as unknown as Experience[];
 
   return (
     <>
+      <AnimationsClient />
       <div className="grain-overlay"></div>
       <Nav />
 
