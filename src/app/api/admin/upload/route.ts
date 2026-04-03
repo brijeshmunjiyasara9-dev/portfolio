@@ -1,11 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { getDb } from '@/lib/db';
 
-/* ── Route segment config: raise body-size limit to 10 MB ───────────────── */
+/* ── Route segment config ────────────────────────────────────────────────── */
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
+
+/* ── Allowed MIME types ──────────────────────────────────────────────────── */
+const ALLOWED_IMAGE_MIME: Record<string, string> = {
+  'image/jpeg':  '.jpg',
+  'image/jpg':   '.jpg',
+  'image/png':   '.png',
+  'image/webp':  '.webp',
+  'image/gif':   '.gif',
+  'image/avif':  '.avif',
+};
+
+const ALLOWED_RESUME_MIME: Record<string, string> = {
+  'application/pdf':                                                          '.pdf',
+  'application/msword':                                                       '.doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+};
 
 /* ── Auth helper ─────────────────────────────────────────────────────────── */
 async function requireAuth(req: NextRequest) {
@@ -17,7 +32,9 @@ async function requireAuth(req: NextRequest) {
 /* ── POST /api/admin/upload ─────────────────────────────────────────────── */
 export async function POST(req: NextRequest) {
   const payload = await requireAuth(req);
-  if (!payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!payload) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   try {
     const formData = await req.formData();
@@ -28,58 +45,110 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'File and type are required' }, { status: 400 });
     }
 
-    // Validate file size (10 MB limit)
-    const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
-    if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: 'File too large. Maximum size is 10 MB.' }, { status: 400 });
-    }
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Ensure upload directory exists
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadDir, { recursive: true });
-
-    // Generate unique filename
-    const originalExt = path.extname(file.name);
-    const ext = originalExt.toLowerCase();
-    const timestamp = Date.now();
+    /* ── File size limit: 5 MB for images, 10 MB for resume ─────────────── */
+    const MAX_IMAGE_SIZE  = 5  * 1024 * 1024;
+    const MAX_RESUME_SIZE = 10 * 1024 * 1024;
 
     if (type === 'image') {
-      const allowedImageTypes = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'];
-      if (!allowedImageTypes.includes(ext)) {
-        return NextResponse.json({ error: 'Invalid image format. Allowed: JPG, PNG, WEBP, GIF, AVIF.' }, { status: 400 });
+      if (file.size > MAX_IMAGE_SIZE) {
+        return NextResponse.json(
+          { error: 'Image too large. Maximum size is 5 MB.' },
+          { status: 400 }
+        );
       }
-      const filename = `profile_${timestamp}${ext}`;
-      const filePath = path.join(uploadDir, filename);
-      await writeFile(filePath, buffer);
+
+      const mime = file.type || 'image/jpeg';
+      if (!ALLOWED_IMAGE_MIME[mime]) {
+        // Also check by extension as fallback
+        const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+        const extMap: Record<string, string> = {
+          jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+          webp: 'image/webp', gif: 'image/gif', avif: 'image/avif',
+        };
+        const resolvedMime = extMap[ext];
+        if (!resolvedMime || !ALLOWED_IMAGE_MIME[resolvedMime]) {
+          return NextResponse.json(
+            { error: 'Invalid image format. Allowed: JPG, PNG, WEBP, GIF, AVIF.' },
+            { status: 400 }
+          );
+        }
+      }
+
+      /* ── Convert to base64 data URL ──────────────────────────────────── */
+      const bytes  = await file.arrayBuffer();
+      const base64 = Buffer.from(bytes).toString('base64');
+      const resolvedMime = file.type || 'image/jpeg';
+      const dataUrl = `data:${resolvedMime};base64,${base64}`;
+
+      /* ── Persist to DB immediately ───────────────────────────────────── */
+      const db = await getDb();
+      await db.run(
+        `UPDATE admin SET profile_image = ? WHERE username = ?`,
+        [dataUrl, payload.username as string]
+      );
+
       return NextResponse.json({
-        success: true,
-        url: `/uploads/${filename}`,
+        success:      true,
+        url:          dataUrl,
         originalName: file.name,
       });
     }
 
     if (type === 'resume') {
-      const allowedResumeTypes = ['.pdf', '.doc', '.docx'];
-      if (!allowedResumeTypes.includes(ext)) {
-        return NextResponse.json({ error: 'Invalid resume format. Allowed: PDF, DOC, DOCX.' }, { status: 400 });
+      if (file.size > MAX_RESUME_SIZE) {
+        return NextResponse.json(
+          { error: 'Resume too large. Maximum size is 10 MB.' },
+          { status: 400 }
+        );
       }
-      const filename = `resume_${timestamp}${ext}`;
-      const filePath = path.join(uploadDir, filename);
-      await writeFile(filePath, buffer);
+
+      const mime = file.type || '';
+      const ext  = file.name.split('.').pop()?.toLowerCase() ?? '';
+      const extMimeMap: Record<string, string> = {
+        pdf:  'application/pdf',
+        doc:  'application/msword',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      };
+      const resolvedMime = ALLOWED_RESUME_MIME[mime]
+        ? mime
+        : extMimeMap[ext] ?? '';
+
+      if (!resolvedMime) {
+        return NextResponse.json(
+          { error: 'Invalid resume format. Allowed: PDF, DOC, DOCX.' },
+          { status: 400 }
+        );
+      }
+
+      /* ── Convert to base64 data URL ──────────────────────────────────── */
+      const bytes  = await file.arrayBuffer();
+      const base64 = Buffer.from(bytes).toString('base64');
+      const dataUrl = `data:${resolvedMime};base64,${base64}`;
+
+      /* ── Persist to DB immediately ───────────────────────────────────── */
+      const db = await getDb();
+      await db.run(
+        `UPDATE admin SET resume_path = ?, resume_original_name = ? WHERE username = ?`,
+        [dataUrl, file.name, payload.username as string]
+      );
+
       return NextResponse.json({
-        success: true,
-        url: `/uploads/${filename}`,
+        success:      true,
+        url:          dataUrl,
         originalName: file.name,
       });
     }
 
-    return NextResponse.json({ error: 'Invalid type. Use "image" or "resume".' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid type. Use "image" or "resume".' },
+      { status: 400 }
+    );
 
   } catch (err) {
     console.error('Upload error:', err);
-    return NextResponse.json({ error: 'Upload failed. Please try again.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Upload failed. Please try again.' },
+      { status: 500 }
+    );
   }
 }
