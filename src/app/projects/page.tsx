@@ -1,9 +1,11 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+// Server Component — data is fetched at request time on the server.
+// No client-side fetch, no cold-start waterfall, no blank screen while loading.
+import { getDb } from '@/lib/db';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
-import { usePortfolioAnimations } from '@/components/usePortfolioAnimations';
+import AnimationsClient from '@/components/AnimationsClient';
+
+export const dynamic = 'force-dynamic'; // always SSR, never statically cached
 
 interface Project {
   id: number;
@@ -17,18 +19,15 @@ interface Project {
   website_url: string;
 }
 
-export default function ProjectsPage() {
-  usePortfolioAnimations();
-  const [projects, setProjects] = useState<Project[]>([]);
-
-  useEffect(() => {
-    fetch('/api/portfolio/projects')
-      .then(r => r.json())
-      .then(data => setProjects(Array.isArray(data) ? data : []));
-  }, []);
+export default async function ProjectsPage() {
+  const db = await getDb();
+  const projects = (await db.all(
+    'SELECT * FROM projects WHERE visible = 1 ORDER BY sort_order ASC'
+  )) as unknown as Project[];
 
   return (
     <>
+      <AnimationsClient />
       <div className="grain-overlay"></div>
       <Nav />
 

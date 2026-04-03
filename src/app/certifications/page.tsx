@@ -1,9 +1,10 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+// Server Component — data fetched on the server at request time.
+import { getDb } from '@/lib/db';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
-import { usePortfolioAnimations } from '@/components/usePortfolioAnimations';
+import AnimationsClient from '@/components/AnimationsClient';
+
+export const dynamic = 'force-dynamic';
 
 interface Certification {
   id: number;
@@ -16,18 +17,15 @@ interface Certification {
   image: string;
 }
 
-export default function CertificationsPage() {
-  usePortfolioAnimations();
-  const [certs, setCerts] = useState<Certification[]>([]);
-
-  useEffect(() => {
-    fetch('/api/portfolio/certifications')
-      .then(r => r.json())
-      .then(data => setCerts(Array.isArray(data) ? data : []));
-  }, []);
+export default async function CertificationsPage() {
+  const db = await getDb();
+  const certs = (await db.all(
+    'SELECT * FROM certifications WHERE visible = 1 ORDER BY sort_order ASC'
+  )) as unknown as Certification[];
 
   return (
     <>
+      <AnimationsClient />
       <div className="grain-overlay"></div>
       <Nav />
 
@@ -52,7 +50,7 @@ export default function CertificationsPage() {
 
       {/* Certifications Grid */}
       <div className="cert-grid">
-        {certs.map((cert, idx) => (
+        {certs.map((cert) => (
           <div key={cert.id} className="cert-card reveal-fade">
             {cert.image && (
               <div className="cert-card-img">

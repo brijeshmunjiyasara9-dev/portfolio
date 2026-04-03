@@ -1,26 +1,28 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+// Server Component — data fetched on the server at request time.
+import { getDb } from '@/lib/db';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
-import { usePortfolioAnimations } from '@/components/usePortfolioAnimations';
+import AnimationsClient from '@/components/AnimationsClient';
+
+export const dynamic = 'force-dynamic';
 
 interface Skill {
-  id: number; category: string; role: string; skills_list: string; image: string;
+  id: number;
+  category: string;
+  role: string;
+  skills_list: string;
+  image: string;
 }
 
-export default function SkillsPage() {
-  usePortfolioAnimations();
-  const [skills, setSkills] = useState<Skill[]>([]);
-
-  useEffect(() => {
-    fetch('/api/portfolio/skills')
-      .then(r => r.json())
-      .then(data => setSkills(Array.isArray(data) ? data : []));
-  }, []);
+export default async function SkillsPage() {
+  const db = await getDb();
+  const skills = (await db.all(
+    'SELECT * FROM skills WHERE visible = 1 ORDER BY sort_order ASC'
+  )) as unknown as Skill[];
 
   return (
     <>
+      <AnimationsClient />
       <div className="grain-overlay"></div>
       <Nav />
 
