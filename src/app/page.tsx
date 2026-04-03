@@ -96,10 +96,10 @@ export default function HomePage() {
   });
 
   useEffect(() => {
-    fetch('/api/portfolio/about').then(r => r.json()).then(data => {
+    fetch('/api/portfolio/about', { cache: 'no-store' }).then(r => r.json()).then(data => {
       if (data && data.headline) setAbout(data);
     });
-    fetch('/api/portfolio/profile').then(r => r.json()).then(data => {
+    fetch('/api/portfolio/profile', { cache: 'no-store' }).then(r => r.json()).then(data => {
       if (data) setProfileInfo(data);
     });
   }, []);

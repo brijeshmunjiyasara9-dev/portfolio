@@ -3,6 +3,8 @@ import { getDb } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
+export const dynamic = 'force-dynamic';
+
 /* ── Auth helper ─────────────────────────────────────────────────────────── */
 async function requireAuth(req: NextRequest) {
   const token = req.cookies.get('admin_token')?.value;

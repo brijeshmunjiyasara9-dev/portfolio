@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 /* ── GET /api/portfolio/profile  ── publicly accessible ─────────────────── */
 export async function GET() {
   try {

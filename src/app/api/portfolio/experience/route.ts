@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 async function isAuthenticated(request: NextRequest) {
   const token = request.cookies.get('admin_token')?.value;
   if (!token) return false;
