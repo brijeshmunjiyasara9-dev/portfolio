@@ -15,7 +15,7 @@ export default function ExperiencePage() {
   const [experiences, setExperiences] = useState<Experience[]>([]);
 
   useEffect(() => {
-    fetch('/api/portfolio/experience')
+    fetch('/api/portfolio/experience', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => setExperiences(Array.isArray(data) ? data : []));
   }, []);

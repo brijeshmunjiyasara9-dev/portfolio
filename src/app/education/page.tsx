@@ -14,7 +14,7 @@ export default function EducationPage() {
   const [items, setItems] = useState<Education[]>([]);
 
   useEffect(() => {
-    fetch('/api/portfolio/education')
+    fetch('/api/portfolio/education', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => setItems(Array.isArray(data) ? data : []));
   }, []);

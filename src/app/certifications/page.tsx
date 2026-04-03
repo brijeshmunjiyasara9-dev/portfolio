@@ -21,7 +21,7 @@ export default function CertificationsPage() {
   const [certs, setCerts] = useState<Certification[]>([]);
 
   useEffect(() => {
-    fetch('/api/portfolio/certifications')
+    fetch('/api/portfolio/certifications', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => setCerts(Array.isArray(data) ? data : []));
   }, []);

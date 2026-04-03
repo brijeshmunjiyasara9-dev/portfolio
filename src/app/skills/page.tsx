@@ -14,7 +14,7 @@ export default function SkillsPage() {
   const [skills, setSkills] = useState<Skill[]>([]);
 
   useEffect(() => {
-    fetch('/api/portfolio/skills')
+    fetch('/api/portfolio/skills', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => setSkills(Array.isArray(data) ? data : []));
   }, []);

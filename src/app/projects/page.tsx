@@ -22,7 +22,7 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
-    fetch('/api/portfolio/projects')
+    fetch('/api/portfolio/projects', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => setProjects(Array.isArray(data) ? data : []));
   }, []);
